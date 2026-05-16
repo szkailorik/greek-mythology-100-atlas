@@ -677,6 +677,12 @@ h1 {
   background: rgba(31, 36, 48, 0.5);
 }
 
+@media (min-width: 901px) {
+  .detail-panel {
+    height: min(860px, calc(100vh - 28px));
+  }
+}
+
 .detail-panel {
   display: grid;
   grid-template-columns: minmax(260px, 0.9fr) minmax(280px, 1.1fr);
@@ -688,9 +694,19 @@ h1 {
   box-shadow: var(--shadow);
 }
 
+.detail-media {
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-rows: minmax(0, 1fr) auto;
+  height: 100%;
+  overflow: hidden;
+  background: var(--stone);
+}
+
 .detail-art {
   position: relative;
-  min-height: 460px;
+  min-height: 0;
   background:
     linear-gradient(135deg, rgba(25, 95, 115, 0.11), rgba(127, 48, 67, 0.13)),
     var(--stone);
@@ -699,8 +715,46 @@ h1 {
 .detail-art img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
+}
+
+.visual-legend {
+  display: grid;
+  gap: 8px;
+  border-top: 1px solid rgba(31, 36, 48, 0.12);
+  padding: 12px;
+  background: rgba(255, 253, 248, 0.92);
+}
+
+.visual-legend strong {
+  color: var(--sea);
+  font-size: 0.82rem;
+}
+
+.legend-items {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.legend-chip {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(25, 95, 115, 0.16);
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: var(--ink);
+  background: #fff;
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.legend-chip span {
+  color: var(--muted);
+  font-weight: 900;
 }
 
 .detail-body {
@@ -1244,6 +1298,10 @@ button.ancestry-node:focus-visible {
 
   .detail-panel {
     grid-template-columns: 1fr;
+  }
+
+  .detail-media {
+    grid-template-rows: minmax(320px, auto) auto;
   }
 
   .detail-art {

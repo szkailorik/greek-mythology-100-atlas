@@ -929,6 +929,25 @@ function renderGeneratedBox(item, profile) {
   `;
 }
 
+function renderImageLegend(item, profile) {
+  const [propLabel] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
+  const legendItems = [
+    ["主符号", propLabel],
+    ["神职", item.domains.slice(0, 2).join(" / ")],
+    ["元素", item.symbols.slice(0, 3).join(" / ")]
+  ];
+  return `
+    <div class="visual-legend" aria-label="${escapeHtml(item.name)} 生成图视觉图例">
+      <strong>视觉图例</strong>
+      <div class="legend-items">
+        ${legendItems.map(([label, value]) => `
+          <span class="legend-chip"><span>${escapeHtml(label)}</span>${escapeHtml(value)}</span>
+        `).join("")}
+      </div>
+    </div>
+  `;
+}
+
 function generatedImageGuide(item, profile) {
   const [propLabel, propMeaning] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
   const domainText = item.domains.slice(0, 3).join("、");
@@ -1147,9 +1166,12 @@ function openDetail(id) {
   if (!item) return;
   const profile = visualProfile(item);
   els.panel.innerHTML = `
-    <div class="detail-art art-frame" data-image-id="${escapeHtml(item.id)}">
-      <div class="image-placeholder">${escapeHtml(item.name.slice(0, 1))}</div>
-      <img alt="${escapeHtml(item.name)} 的现代生成全身形象" hidden>
+    <div class="detail-media">
+      <div class="detail-art art-frame" data-image-id="${escapeHtml(item.id)}">
+        <div class="image-placeholder">${escapeHtml(item.name.slice(0, 1))}</div>
+        <img alt="${escapeHtml(item.name)} 的现代生成全身形象" hidden>
+      </div>
+      ${renderImageLegend(item, profile)}
     </div>
     <div class="detail-body">
       <div class="detail-topline">
