@@ -111,6 +111,7 @@ const state = {
 };
 
 let imageObserver = null;
+const rasterPortraitIds = new Set(["zeus", "hera", "poseidon", "demeter", "athena", "apollo", "artemis", "ares", "aphrodite", "hephaestus", "hermes", "dionysus", "hades", "hestia", "persephone"]);
 
 const groupThemes = {
   "奥林匹斯核心": { bg1: "#f8efe2", bg2: "#cad9df", accent: "#8a3147", robe: "#f7f0df", metal: "#b9822d" },
@@ -299,7 +300,14 @@ async function loadImage(frame) {
   const item = deities.find((entry) => entry.id === frame.dataset.imageId);
   if (!item) return;
 
-  setFrameImage(frame, generatedDeityPortrait(item));
+  setFrameImage(frame, deityImageSource(item));
+}
+
+function deityImageSource(item) {
+  if (rasterPortraitIds.has(item.id)) {
+    return `assets/deities/${item.id}.jpg`;
+  }
+  return generatedDeityPortrait(item);
 }
 
 function setFrameImage(frame, source) {
@@ -310,10 +318,19 @@ function setFrameImage(frame, source) {
     if (placeholder) placeholder.hidden = true;
   }, { once: true });
   img.addEventListener("error", () => {
+    if (!img.dataset.fallback) {
+      img.dataset.fallback = "true";
+      img.src = generatedDeityPortrait(itemFromFrame(frame));
+      return;
+    }
     img.hidden = true;
     if (placeholder) placeholder.hidden = false;
   }, { once: true });
   img.src = source;
+}
+
+function itemFromFrame(frame) {
+  return deities.find((entry) => entry.id === frame.dataset.imageId) || deities[0];
 }
 
 function generatedDeityPortrait(item) {
