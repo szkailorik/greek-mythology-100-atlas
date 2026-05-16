@@ -866,7 +866,19 @@ h1 {
   gap: 10px;
 }
 
+.artwork-box-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
 .generated-box-head span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.artwork-box-head span {
   color: var(--muted);
   font-size: 0.82rem;
 }
@@ -913,6 +925,30 @@ h1 {
 }
 
 .image-guide-row p {
+  margin: 0;
+}
+
+.artwork-compare {
+  display: grid;
+  gap: 7px;
+  border-top: 1px solid rgba(179, 122, 34, 0.16);
+  padding-top: 8px;
+}
+
+.artwork-compare-row {
+  display: grid;
+  grid-template-columns: 78px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.artwork-compare-row strong {
+  color: var(--gold);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.artwork-compare-row p {
   margin: 0;
 }
 
@@ -1347,6 +1383,11 @@ button.ancestry-node:focus-visible {
   }
 
   .image-guide-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .artwork-compare-row {
     grid-template-columns: 1fr;
     gap: 2px;
   }

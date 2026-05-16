@@ -973,6 +973,70 @@ function generatedImageGuide(item, profile) {
   ];
 }
 
+function renderArtworkBox(item, profile) {
+  const comparison = artworkComparison(item, profile);
+  return `
+    <section class="artwork-box">
+      <div class="artwork-box-head">
+        <h3>经典艺术作品知识点</h3>
+        <span>${escapeHtml(comparison.mode)}</span>
+      </div>
+      <p><strong>${escapeHtml(item.artwork.title)}</strong></p>
+      <p>${escapeHtml(item.artwork.artist)} · ${escapeHtml(item.artwork.year)}</p>
+      <p>${escapeHtml(item.artwork.note)}</p>
+      <div class="artwork-compare">
+        ${comparison.rows.map(({ label, text }) => `
+          <div class="artwork-compare-row">
+            <strong>${escapeHtml(label)}</strong>
+            <p>${escapeHtml(text)}</p>
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function artworkComparison(item, profile) {
+  const [propLabel] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
+  const mode = artworkReferenceMode(item.artwork);
+  const supportSymbols = comparisonSymbols(item, propLabel);
+  return {
+    mode,
+    rows: [
+      {
+        label: "现代主图",
+        text: `本站生成图优先让${item.cn}一眼可辨，所以把${propLabel}作为第一识别点，再用${supportSymbols}和全身姿态补足传统象征。`
+      },
+      {
+        label: mode,
+        text: `这条经典参考来自 ${item.artwork.artist} 的《${item.artwork.title}》（${item.artwork.year}），更适合观察英语艺术史中常见的 ${item.name} 形象或相关母题。`
+      },
+      {
+        label: "对照看法",
+        text: "现代图偏向快速识别神职与象征，经典作品则常抓住某个故事瞬间、寓意传统或古典造型；两者合起来看，既能认出神，也能理解它在艺术史中的样子。"
+      }
+    ]
+  };
+}
+
+function comparisonSymbols(item, propLabel) {
+  const symbols = item.symbols.filter((symbol) => !symbolCoveredByProp(symbol, propLabel));
+  return (symbols.length ? symbols : item.symbols).slice(0, 2).join("、");
+}
+
+function symbolCoveredByProp(symbol, propLabel) {
+  const compactSymbol = symbol.replace(/(牌|杖|树|枝|车|冠|轮|杯|琴|花)$/u, "");
+  return propLabel.includes(symbol)
+    || (compactSymbol.length >= 1 && propLabel.includes(compactSymbol));
+}
+
+function artworkReferenceMode(artwork) {
+  const text = `${artwork.title} ${artwork.artist} ${artwork.year} ${artwork.note}`;
+  if (/(雕塑|statue|sculpture|relief|Canova|Bernini|Winged Victory)/iu.test(text)) return "雕塑参考";
+  if (/(瓶画|陶瓶|马赛克|壁画|钱币|fresco|mosaic|vase|relief|tradition|imagery|无单一主流油画|传统)/iu.test(text)) return "图像传统";
+  return "经典作品";
+}
+
 function renderLineageBox(item) {
   const lineage = getLineage(item);
   const rows = [
@@ -1191,12 +1255,7 @@ function openDetail(id) {
       <p class="summary">${escapeHtml(item.summary)}</p>
       ${renderStoryBox(item)}
       ${renderLineageBox(item)}
-      <section class="artwork-box">
-        <h3>经典艺术作品知识点</h3>
-        <p><strong>${escapeHtml(item.artwork.title)}</strong></p>
-        <p>${escapeHtml(item.artwork.artist)} · ${escapeHtml(item.artwork.year)}</p>
-        <p>${escapeHtml(item.artwork.note)}</p>
-      </section>
+      ${renderArtworkBox(item, profile)}
       <a class="detail-link" href="${wikiUrl(item)}" target="_blank" rel="noreferrer">打开英文百科与图源参考</a>
     </div>
   `;
