@@ -44,6 +44,48 @@
     </header>
 
     <main>
+      <section class="lineage-overview" aria-labelledby="lineageTitle">
+        <div class="lineage-copy">
+          <p class="eyebrow">Genealogy Map</p>
+          <h2 id="lineageTitle">神谱速读</h2>
+          <p>从原初神到泰坦，再到奥林匹斯，谱系按主流英语资料整理；有分歧的神祇会在详情里标出异说。</p>
+        </div>
+        <div class="lineage-lanes" aria-label="主干谱系">
+          <div class="lineage-lane">
+            <span>原初</span>
+            <button type="button" data-detail="chaos">Chaos</button>
+            <button type="button" data-detail="gaia">Gaia</button>
+            <button type="button" data-detail="uranus">Uranus</button>
+            <button type="button" data-detail="nyx">Nyx</button>
+          </div>
+          <div class="lineage-lane">
+            <span>泰坦</span>
+            <button type="button" data-detail="cronus">Cronus</button>
+            <button type="button" data-detail="rhea">Rhea</button>
+            <button type="button" data-detail="oceanus">Oceanus</button>
+            <button type="button" data-detail="mnemosyne">Mnemosyne</button>
+          </div>
+          <div class="lineage-lane">
+            <span>奥林匹斯</span>
+            <button type="button" data-detail="zeus">Zeus</button>
+            <button type="button" data-detail="hera">Hera</button>
+            <button type="button" data-detail="poseidon">Poseidon</button>
+            <button type="button" data-detail="demeter">Demeter</button>
+          </div>
+          <div class="lineage-lane">
+            <span>后代群</span>
+            <button type="button" data-detail="apollo">Apollo</button>
+            <button type="button" data-detail="athena">Athena</button>
+            <button type="button" data-detail="calliope">Muses</button>
+            <button type="button" data-detail="boreas">Winds</button>
+          </div>
+        </div>
+        <div class="lineage-sources">
+          <span>谱系骨架参考</span>
+          <a href="https://www.theoi.com/Tree.html" target="_blank" rel="noreferrer">Theoi family tree</a>
+          <a href="https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0130%3Acard%3D104" target="_blank" rel="noreferrer">Hesiod Theogony</a>
+        </div>
+      </section>
       <nav class="filters" id="groupFilters" aria-label="神祇类别"></nav>
       <section class="catalog" id="catalog" aria-live="polite"></section>
     </main>
@@ -59,6 +101,7 @@
       <a href="开发文档.md">开发文档</a>
     </footer>
 
+    <script src="myth-data.js" defer></script>
     <script src="app.js" defer></script>
   </body>
 </html>

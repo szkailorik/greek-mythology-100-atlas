@@ -61,6 +61,7 @@ a {
 
 .header-main,
 .controls,
+.lineage-overview,
 .filters,
 .catalog,
 .site-footer {
@@ -166,9 +167,97 @@ h1 {
 .icon-button:hover,
 .name-button:hover,
 .card-action:hover,
-.filter-button:hover {
+.filter-button:hover,
+.lineage-lane button:hover,
+.relation-chip:hover {
   border-color: rgba(25, 95, 115, 0.45);
   color: var(--sea);
+}
+
+.lineage-overview {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.74fr) minmax(320px, 1.26fr);
+  gap: 14px;
+  margin-top: 16px;
+  border: 1px solid rgba(25, 95, 115, 0.18);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(255, 253, 248, 0.86);
+}
+
+.lineage-copy {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.lineage-copy h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", "Noto Serif SC", serif;
+  font-size: 1.28rem;
+  line-height: 1.12;
+}
+
+.lineage-copy p {
+  margin: 0;
+  color: #3f3b35;
+  line-height: 1.55;
+}
+
+.lineage-lanes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.lineage-lane {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  border-left: 3px solid rgba(179, 122, 34, 0.36);
+  padding-left: 10px;
+}
+
+.lineage-lane span,
+.lineage-sources span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.lineage-lane button {
+  min-width: 0;
+  min-height: 32px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 5px 8px;
+  color: var(--ink);
+  background: #fff;
+  font-weight: 800;
+  text-align: left;
+}
+
+.lineage-sources {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+  border-top: 1px solid rgba(31, 36, 48, 0.08);
+  padding-top: 10px;
+}
+
+.lineage-sources a {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid rgba(25, 95, 115, 0.22);
+  border-radius: 8px;
+  padding: 4px 8px;
+  background: #fff;
+  text-decoration: none;
+  font-size: 0.84rem;
+  font-weight: 800;
 }
 
 .filters {
@@ -364,7 +453,8 @@ h1 {
   line-height: 1.62;
 }
 
-.artwork-line {
+.artwork-line,
+.story-line {
   display: grid;
   gap: 4px;
   margin: 0;
@@ -375,10 +465,19 @@ h1 {
   line-height: 1.42;
 }
 
-.artwork-line span {
+.story-line {
+  border-left-color: rgba(127, 48, 67, 0.52);
+}
+
+.artwork-line span,
+.story-line span {
   color: var(--gold);
   font-size: 0.76rem;
   font-weight: 900;
+}
+
+.story-line span {
+  color: var(--wine);
 }
 
 .card-footer {
@@ -432,6 +531,7 @@ h1 {
 .detail-panel {
   display: grid;
   grid-template-columns: minmax(260px, 0.9fr) minmax(280px, 1.1fr);
+  max-height: inherit;
   overflow: hidden;
   border: 1px solid rgba(255, 253, 248, 0.45);
   border-radius: 8px;
@@ -456,6 +556,8 @@ h1 {
 
 .detail-body {
   min-width: 0;
+  max-height: inherit;
+  overflow: auto;
   display: grid;
   align-content: start;
   gap: 14px;
@@ -503,6 +605,8 @@ h1 {
 }
 
 .generated-box,
+.story-box,
+.lineage-box,
 .artwork-box {
   display: grid;
   gap: 7px;
@@ -520,14 +624,30 @@ h1 {
   background: rgba(179, 122, 34, 0.08);
 }
 
+.story-box {
+  border: 1px solid rgba(127, 48, 67, 0.2);
+  background: rgba(127, 48, 67, 0.07);
+}
+
+.lineage-box {
+  border: 1px solid rgba(104, 118, 63, 0.22);
+  background: rgba(104, 118, 63, 0.08);
+}
+
 .generated-box h3,
 .generated-box p,
+.story-box h3,
+.story-box p,
+.lineage-box h3,
+.lineage-box p,
 .artwork-box h3,
 .artwork-box p {
   margin: 0;
 }
 
 .generated-box h3,
+.story-box h3,
+.lineage-box h3,
 .artwork-box h3 {
   font-size: 0.88rem;
 }
@@ -540,11 +660,124 @@ h1 {
   color: var(--gold);
 }
 
+.story-box h3 {
+  color: var(--wine);
+}
+
+.lineage-box h3 {
+  color: var(--olive);
+}
+
 .generated-box p,
+.story-box p,
+.lineage-box p,
 .artwork-box p {
   color: #3f3b35;
   font-size: 0.93rem;
   line-height: 1.55;
+}
+
+.story-title {
+  display: grid;
+  gap: 2px;
+}
+
+.story-title strong {
+  font-size: 1rem;
+}
+
+.story-title span,
+.lineage-box-head span,
+.relation-row span,
+.source-links {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.lineage-box-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.relation-grid {
+  display: grid;
+  gap: 8px;
+}
+
+.relation-row {
+  display: grid;
+  grid-template-columns: 94px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.relation-row > div:first-child {
+  display: grid;
+  gap: 1px;
+}
+
+.relation-row strong {
+  font-size: 0.86rem;
+}
+
+.relation-chips {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.relation-chip {
+  min-height: 30px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(104, 118, 63, 0.28);
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: var(--ink);
+  background: #fff;
+  font-size: 0.82rem;
+  font-weight: 850;
+  text-decoration: none;
+}
+
+.relation-chip span {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.relation-chip.external {
+  border-color: rgba(31, 36, 48, 0.12);
+  color: #4c4a44;
+  background: rgba(255, 253, 248, 0.72);
+  font-weight: 750;
+}
+
+.lineage-notes {
+  display: grid;
+  gap: 5px;
+  margin: 2px 0 0;
+  padding-left: 18px;
+  color: #4c4a44;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.source-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  border-top: 1px solid rgba(31, 36, 48, 0.08);
+  padding-top: 8px;
+}
+
+.source-links a {
+  color: var(--sea);
+  font-weight: 800;
+  text-decoration: none;
 }
 
 .detail-link {
@@ -605,6 +838,14 @@ h1 {
     grid-template-columns: 1fr 1fr;
   }
 
+  .lineage-overview {
+    grid-template-columns: 1fr;
+  }
+
+  .lineage-lanes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
   .search-control,
   .voice-control {
     grid-column: 1 / -1;
@@ -622,6 +863,7 @@ h1 {
 @media (max-width: 560px) {
   .header-main,
   .controls,
+  .lineage-overview,
   .filters,
   .catalog,
   .site-footer {
@@ -634,6 +876,14 @@ h1 {
 
   .controls {
     grid-template-columns: 1fr 44px;
+  }
+
+  .lineage-lanes {
+    grid-template-columns: 1fr;
+  }
+
+  .relation-row {
+    grid-template-columns: 1fr;
   }
 
   .control:not(.search-control):not(.voice-control) {

@@ -146,6 +146,10 @@ const feminineIds = new Set([
   "terpsichore", "thalia-muse", "urania", "maia"
 ]);
 
+const deityStories = window.mythStories || {};
+const deityLineage = window.mythLineage || {};
+const lineageSources = window.mythLineageSources || [];
+
 const els = {
   totalCount: document.querySelector("#totalCount"),
   visibleCount: document.querySelector("#visibleCount"),
@@ -196,6 +200,8 @@ function wikiUrl(item) {
 }
 
 function getSearchText(item) {
+  const story = getStory(item);
+  const lineage = getLineage(item);
   return normalize([
     item.name,
     item.cn,
@@ -206,7 +212,12 @@ function getSearchText(item) {
     item.pronunciation,
     item.artwork.title,
     item.artwork.artist,
-    item.summary
+    item.summary,
+    story.titleZh,
+    story.titleEn,
+    story.zh,
+    story.en,
+    relationSearchText(lineage)
   ].join(" "));
 }
 
@@ -257,6 +268,7 @@ function renderCatalog() {
 }
 
 function renderCard(item) {
+  const story = getStory(item);
   return `
     <article class="deity-card" data-id="${escapeHtml(item.id)}">
       <div class="art-frame" data-image-id="${escapeHtml(item.id)}">
@@ -277,6 +289,7 @@ function renderCard(item) {
         ${tagList(item.domains, "domain-list")}
         <p class="summary">${escapeHtml(item.summary)}</p>
         <p class="artwork-line"><span>经典艺术参考</span>${escapeHtml(item.artwork.title)} · ${escapeHtml(item.artwork.artist)} · ${escapeHtml(item.artwork.year)}</p>
+        <p class="story-line"><span>代表小故事</span>${escapeHtml(story.titleZh)} · ${escapeHtml(story.titleEn)}</p>
         <div class="card-footer">
           <span class="greek-name">${escapeHtml(item.greek)}</span>
           <button class="card-action" type="button" data-detail="${escapeHtml(item.id)}">详情</button>
@@ -716,6 +729,109 @@ function laurelSvg({ accent, metal }) {
   return `<path d="M164 410 C122 500 144 606 234 678" fill="none" stroke="${accent}" stroke-width="10"/><path d="M154 448 C196 430 210 388 188 360 M146 510 C194 500 222 464 214 430 M166 574 C212 574 246 544 250 506 M204 636 C246 624 278 590 286 552" fill="none" stroke="${metal}" stroke-width="9" stroke-linecap="round"/>`;
 }
 
+function getStory(item) {
+  return deityStories[item.id] || {
+    titleZh: "代表神话片段",
+    titleEn: "Representative myth",
+    zh: item.summary,
+    en: `${item.name} is introduced here through the most widely recognizable role in Greek mythology.`
+  };
+}
+
+function getLineage(item) {
+  return deityLineage[item.id] || {
+    parents: [],
+    parentNames: [],
+    consorts: [],
+    consortNames: [],
+    children: [],
+    childNames: [],
+    siblings: [],
+    siblingNames: [],
+    notes: ["这位神祇的谱系在主流入门材料中不够稳定，详情以神职和代表故事为主。"]
+  };
+}
+
+function relationSearchText(lineage) {
+  return [
+    ...(lineage.parents || []),
+    ...(lineage.parentNames || []),
+    ...(lineage.consorts || []),
+    ...(lineage.consortNames || []),
+    ...(lineage.children || []),
+    ...(lineage.childNames || []),
+    ...(lineage.siblings || []),
+    ...(lineage.siblingNames || []),
+    ...(lineage.notes || [])
+  ].map((entry) => {
+    const item = deities.find((deity) => deity.id === entry);
+    return item ? `${item.name} ${item.cn}` : entry;
+  }).join(" ");
+}
+
+function renderStoryBox(item) {
+  const story = getStory(item);
+  return `
+    <section class="story-box">
+      <h3>最有名的小故事</h3>
+      <div class="story-title">
+        <strong>${escapeHtml(story.titleZh)}</strong>
+        <span>${escapeHtml(story.titleEn)}</span>
+      </div>
+      <p lang="zh-CN">${escapeHtml(story.zh)}</p>
+      <p lang="en">${escapeHtml(story.en)}</p>
+    </section>
+  `;
+}
+
+function renderLineageBox(item) {
+  const lineage = getLineage(item);
+  const rows = [
+    ["父母", "Parents", lineage.parents, lineage.parentNames],
+    ["配偶 / 伴侣", "Consorts", lineage.consorts, lineage.consortNames],
+    ["子女", "Children", lineage.children, lineage.childNames],
+    ["兄弟姐妹", "Siblings", lineage.siblings, lineage.siblingNames]
+  ].map(([labelZh, labelEn, ids, names]) => renderRelationRow(labelZh, labelEn, ids, names)).join("");
+  const notes = (lineage.notes || []).map((note) => `<li>${escapeHtml(note)}</li>`).join("");
+  const sources = lineageSources.map((source) => `<a href="${escapeHtml(source.url)}" target="_blank" rel="noreferrer">${escapeHtml(source.label)}</a>`).join("");
+
+  return `
+    <section class="lineage-box">
+      <div class="lineage-box-head">
+        <h3>谱系关系</h3>
+        <span>主流谱系 + 异说提示</span>
+      </div>
+      <div class="relation-grid">
+        ${rows}
+      </div>
+      ${notes ? `<ul class="lineage-notes">${notes}</ul>` : ""}
+      ${sources ? `<div class="source-links">${sources}</div>` : ""}
+    </section>
+  `;
+}
+
+function renderRelationRow(labelZh, labelEn, ids = [], names = []) {
+  if (!ids.length && !names.length) return "";
+  return `
+    <div class="relation-row">
+      <div>
+        <strong>${escapeHtml(labelZh)}</strong>
+        <span>${escapeHtml(labelEn)}</span>
+      </div>
+      <div class="relation-chips">
+        ${ids.map(renderRelationChip).join("")}
+        ${names.map((name) => `<span class="relation-chip external">${escapeHtml(name)}</span>`).join("")}
+      </div>
+    </div>
+  `;
+}
+
+function renderRelationChip(id) {
+  const item = deities.find((entry) => entry.id === id);
+  if (!item) return `<span class="relation-chip external">${escapeHtml(id)}</span>`;
+  return `<button class="relation-chip" type="button" data-detail="${escapeHtml(item.id)}">${escapeHtml(item.name)}<span>${escapeHtml(item.cn)}</span></button>`;
+}
+
 function openDetail(id) {
   const item = deities.find((entry) => entry.id === id);
   if (!item) return;
@@ -744,6 +860,8 @@ function openDetail(id) {
         <p>${escapeHtml(profile.description)}</p>
       </section>
       <p class="summary">${escapeHtml(item.summary)}</p>
+      ${renderStoryBox(item)}
+      ${renderLineageBox(item)}
       <section class="artwork-box">
         <h3>经典艺术作品知识点</h3>
         <p><strong>${escapeHtml(item.artwork.title)}</strong></p>
@@ -754,7 +872,9 @@ function openDetail(id) {
     </div>
   `;
 
-  if (typeof els.dialog.showModal === "function") {
+  if (els.dialog.open) {
+    // Relation chips can replace content while the dialog is already open.
+  } else if (typeof els.dialog.showModal === "function") {
     els.dialog.showModal();
   } else {
     els.dialog.setAttribute("open", "");
