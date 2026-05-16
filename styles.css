@@ -206,7 +206,7 @@ h1 {
 .deity-card {
   min-width: 0;
   display: grid;
-  grid-template-rows: 176px auto;
+  grid-template-rows: 268px auto;
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -216,7 +216,7 @@ h1 {
 
 .art-frame {
   position: relative;
-  min-height: 176px;
+  min-height: 268px;
   overflow: hidden;
   background:
     linear-gradient(135deg, rgba(25, 95, 115, 0.11), rgba(179, 122, 34, 0.12)),
@@ -226,7 +226,7 @@ h1 {
 .art-frame img {
   width: 100%;
   height: 100%;
-  object-fit: cover;
+  object-fit: contain;
   display: block;
   filter: saturate(0.92) contrast(1.02);
 }
@@ -502,25 +502,45 @@ h1 {
   font-size: 0.92rem;
 }
 
+.generated-box,
 .artwork-box {
   display: grid;
   gap: 7px;
-  border: 1px solid rgba(179, 122, 34, 0.24);
   border-radius: 8px;
   padding: 12px;
+}
+
+.generated-box {
+  border: 1px solid rgba(25, 95, 115, 0.22);
+  background: rgba(25, 95, 115, 0.08);
+}
+
+.artwork-box {
+  border: 1px solid rgba(179, 122, 34, 0.24);
   background: rgba(179, 122, 34, 0.08);
 }
 
+.generated-box h3,
+.generated-box p,
 .artwork-box h3,
 .artwork-box p {
   margin: 0;
 }
 
+.generated-box h3,
 .artwork-box h3 {
-  color: var(--gold);
   font-size: 0.88rem;
 }
 
+.generated-box h3 {
+  color: var(--sea);
+}
+
+.artwork-box h3 {
+  color: var(--gold);
+}
+
+.generated-box p,
 .artwork-box p {
   color: #3f3b35;
   font-size: 0.93rem;
@@ -630,7 +650,7 @@ h1 {
   }
 
   .deity-card {
-    grid-template-rows: 210px auto;
+    grid-template-rows: 300px auto;
   }
 
   .detail-body {

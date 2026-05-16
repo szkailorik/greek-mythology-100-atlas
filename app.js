@@ -110,8 +110,27 @@ const state = {
   voiceName: ""
 };
 
-const wikiCache = new Map();
 let imageObserver = null;
+
+const groupThemes = {
+  "奥林匹斯核心": { bg1: "#f8efe2", bg2: "#cad9df", accent: "#8a3147", robe: "#f7f0df", metal: "#b9822d" },
+  "冥界与家宅": { bg1: "#f2eee7", bg2: "#c9c3cb", accent: "#4a344f", robe: "#eee8df", metal: "#8d7041" },
+  "著名小神": { bg1: "#f5f1e7", bg2: "#c7dfd5", accent: "#245c66", robe: "#fff4df", metal: "#b78329" },
+  "泰坦神族": { bg1: "#f3ead8", bg2: "#c9c7b3", accent: "#6b5b2e", robe: "#eee2c6", metal: "#9f7b35" },
+  "海洋与风": { bg1: "#edf6f5", bg2: "#a9cfda", accent: "#155f74", robe: "#e8f1ee", metal: "#6f9ca5" },
+  "原初神": { bg1: "#efe9f2", bg2: "#b9bccd", accent: "#373f63", robe: "#e8e1ef", metal: "#8b83b1" },
+  "命运与人格化": { bg1: "#f4eee8", bg2: "#d8c3bc", accent: "#7c3a37", robe: "#f2e6dc", metal: "#ad7c3a" },
+  "缪斯与美惠": { bg1: "#f7f0e8", bg2: "#d9d5be", accent: "#6b6f3b", robe: "#fff5e6", metal: "#b8913e" }
+};
+
+const feminineIds = new Set([
+  "hera", "demeter", "athena", "artemis", "aphrodite", "hestia", "persephone", "nike", "hebe",
+  "iris", "selene", "eos", "hecate", "hygieia", "nemesis", "tyche", "themis", "leto", "rhea",
+  "tethys", "theia", "phoebe", "mnemosyne", "metis", "dione", "amphitrite", "thetis", "galatea",
+  "leucothea", "gaia", "nyx", "hemera", "clotho", "lachesis", "atropos", "eris", "harmonia",
+  "enyo", "bia", "aglaea", "calliope", "clio", "erato", "euterpe", "melpomene", "polyhymnia",
+  "terpsichore", "thalia-muse", "urania", "maia"
+]);
 
 const els = {
   totalCount: document.querySelector("#totalCount"),
@@ -228,7 +247,7 @@ function renderCard(item) {
     <article class="deity-card" data-id="${escapeHtml(item.id)}">
       <div class="art-frame" data-image-id="${escapeHtml(item.id)}">
         <div class="image-placeholder">${escapeHtml(item.name.slice(0, 1))}</div>
-        <img alt="${escapeHtml(item.name)} 的主流艺术形象" loading="lazy" hidden>
+        <img alt="${escapeHtml(item.name)} 的现代生成全身形象" loading="lazy" hidden>
         <span class="rank-badge">#${item.rank}</span>
         <span class="group-badge">${escapeHtml(item.group)}</span>
       </div>
@@ -243,7 +262,7 @@ function renderCard(item) {
         <div class="pronunciation">点击英文名听发音</div>
         ${tagList(item.domains, "domain-list")}
         <p class="summary">${escapeHtml(item.summary)}</p>
-        <p class="artwork-line"><span>代表形象</span>${escapeHtml(item.artwork.title)} · ${escapeHtml(item.artwork.artist)} · ${escapeHtml(item.artwork.year)}</p>
+        <p class="artwork-line"><span>经典艺术参考</span>${escapeHtml(item.artwork.title)} · ${escapeHtml(item.artwork.artist)} · ${escapeHtml(item.artwork.year)}</p>
         <div class="card-footer">
           <span class="greek-name">${escapeHtml(item.greek)}</span>
           <button class="card-action" type="button" data-detail="${escapeHtml(item.id)}">详情</button>
@@ -274,26 +293,13 @@ function hydrateImages() {
   }
 }
 
-async function fetchWikiImage(item) {
-  if (!wikiCache.has(item.id)) {
-    const url = `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(item.wiki)}`;
-    wikiCache.set(item.id, fetch(url)
-      .then((response) => response.ok ? response.json() : null)
-      .catch(() => null));
-  }
-
-  const data = await wikiCache.get(item.id);
-  return data?.thumbnail?.source || data?.originalimage?.source || "";
-}
-
 async function loadImage(frame) {
   if (frame.dataset.loaded === "true") return;
   frame.dataset.loaded = "true";
   const item = deities.find((entry) => entry.id === frame.dataset.imageId);
   if (!item) return;
 
-  const source = await fetchWikiImage(item);
-  setFrameImage(frame, source || generatedFallbackImage(item));
+  setFrameImage(frame, generatedDeityPortrait(item));
 }
 
 function setFrameImage(frame, source) {
@@ -310,49 +316,380 @@ function setFrameImage(frame, source) {
   img.src = source;
 }
 
-function generatedFallbackImage(item) {
-  const hue = [...item.id].reduce((total, char) => total + char.charCodeAt(0), 0) % 360;
-  const accent = `hsl(${hue}, 46%, 34%)`;
-  const glow = `hsl(${(hue + 42) % 360}, 58%, 72%)`;
-  const title = escapeHtml(item.name);
-  const greek = escapeHtml(item.greek);
-  const domains = escapeHtml(item.domains.slice(0, 2).join(" · "));
-  const symbol = escapeHtml(item.symbols[0] || item.name.slice(0, 1));
+function generatedDeityPortrait(item) {
+  const profile = visualProfile(item);
   const svg = `
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 620">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 980" role="img" aria-label="${escapeHtml(item.name)} full body generated deity portrait">
       <defs>
-        <linearGradient id="bg" x1="0" x2="1" y1="0" y2="1">
-          <stop offset="0" stop-color="#f7f2e8"/>
-          <stop offset="0.52" stop-color="${glow}"/>
-          <stop offset="1" stop-color="#d8c8ad"/>
+        <linearGradient id="bg-${item.id}" x1="0" x2="1" y1="0" y2="1">
+          <stop offset="0" stop-color="${profile.bg1}"/>
+          <stop offset="0.58" stop-color="${profile.bg2}"/>
+          <stop offset="1" stop-color="#f8f3e8"/>
         </linearGradient>
-        <radialGradient id="halo" cx="50%" cy="34%" r="46%">
-          <stop offset="0" stop-color="#fffdf8" stop-opacity="0.96"/>
+        <radialGradient id="halo-${item.id}" cx="50%" cy="26%" r="38%">
+          <stop offset="0" stop-color="#fffdf8" stop-opacity="0.95"/>
+          <stop offset="0.62" stop-color="#fffdf8" stop-opacity="0.32"/>
           <stop offset="1" stop-color="#fffdf8" stop-opacity="0"/>
         </radialGradient>
+        <filter id="shadow-${item.id}" x="-20%" y="-20%" width="140%" height="140%">
+          <feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#1f2430" flood-opacity="0.2"/>
+        </filter>
       </defs>
-      <rect width="900" height="620" fill="url(#bg)"/>
-      <rect x="34" y="34" width="832" height="552" rx="28" fill="none" stroke="${accent}" stroke-width="12" opacity="0.52"/>
-      <circle cx="450" cy="230" r="210" fill="url(#halo)"/>
-      <path d="M210 482 C318 404 348 288 450 288 C552 288 582 404 690 482 Z" fill="${accent}" opacity="0.2"/>
-      <circle cx="450" cy="256" r="96" fill="${accent}" opacity="0.18"/>
-      <text x="450" y="238" text-anchor="middle" font-family="Georgia, serif" font-size="118" fill="${accent}" font-weight="700">${title.slice(0, 1)}</text>
-      <text x="450" y="360" text-anchor="middle" font-family="Georgia, serif" font-size="48" fill="#1f2430" font-weight="700">${title}</text>
-      <text x="450" y="414" text-anchor="middle" font-family="Georgia, serif" font-size="34" fill="#4f5968">${greek}</text>
-      <text x="450" y="468" text-anchor="middle" font-family="system-ui, sans-serif" font-size="28" fill="#33404a">${domains}</text>
-      <text x="450" y="520" text-anchor="middle" font-family="system-ui, sans-serif" font-size="24" fill="#6b5635">Generated classical study · ${symbol}</text>
+      <rect width="720" height="980" fill="url(#bg-${item.id})"/>
+      ${sceneSvg(profile)}
+      <circle cx="360" cy="255" r="230" fill="url(#halo-${item.id})"/>
+      <g filter="url(#shadow-${item.id})">
+        ${auraSvg(profile)}
+        ${figureSvg(profile)}
+        ${propSvg(profile)}
+      </g>
+      <path d="M110 902 C210 858 510 858 610 902" fill="none" stroke="${profile.accent}" stroke-width="10" opacity="0.24"/>
     </svg>
   `;
   return `data:image/svg+xml;charset=UTF-8,${encodeURIComponent(svg)}`;
 }
 
+function visualProfile(item) {
+  const theme = groupThemes[item.group] || groupThemes["著名小神"];
+  const seed = hashId(item.id);
+  const prop = pickVisualProp(item);
+  const feminine = feminineIds.has(item.id);
+  const skin = ["#c98f68", "#b87958", "#d7a27c", "#a86c4e"][seed % 4];
+  const hair = feminine
+    ? ["#1f1b1a", "#6a432b", "#8a5c32", "#2c2630"][seed % 4]
+    : ["#1c1718", "#5a3828", "#7a512f", "#252331"][seed % 4];
+  return {
+    ...theme,
+    item,
+    seed,
+    prop,
+    feminine,
+    skin,
+    hair,
+    robe: theme.robe,
+    side: seed % 2 ? -1 : 1,
+    description: `现代生成全身形象：突出${item.domains.slice(0, 2).join("、")}，主视觉符号为${item.symbols.slice(0, 3).join("、")}。`
+  };
+}
+
+function hashId(value) {
+  return [...value].reduce((total, char) => ((total * 31) + char.charCodeAt(0)) % 997, 17);
+}
+
+function pickVisualProp(item) {
+  const text = `${item.id} ${item.name} ${item.domains.join(" ")} ${item.symbols.join(" ")}`.toLowerCase();
+  const exact = {
+    zeus: "lightning", hera: "peacock", poseidon: "trident", demeter: "wheat", athena: "owlShield",
+    apollo: "sunLyre", artemis: "moonBow", ares: "spearShield", aphrodite: "shellRose",
+    hephaestus: "hammerAnvil", hermes: "caduceus", dionysus: "grapesCup", hades: "bident",
+    hestia: "hearth", persephone: "pomegranate", helios: "sunChariot", selene: "moon",
+    eos: "dawn", hecate: "twinTorches", pan: "pipes", asclepius: "serpentStaff",
+    hypnos: "poppy", thanatos: "downTorch", nemesis: "scales", tyche: "cornucopia",
+    themis: "scalesSword", rhea: "lionDrum", cronus: "sickle", oceanus: "waveHorn",
+    atlas: "globe", prometheus: "fireChain", gaia: "earthFruit", uranus: "starScythe",
+    nyx: "nightStars", chaos: "void", phanes: "cosmicEgg", clotho: "spindle",
+    lachesis: "measureThread", atropos: "shears", eris: "apple", harmonia: "necklace",
+    urania: "globeCompass"
+  };
+  if (exact[item.id]) return exact[item.id];
+  if (text.includes("三叉戟")) return "trident";
+  if (text.includes("霹雳") || text.includes("雷霆")) return "lightning";
+  if (text.includes("孔雀")) return "peacock";
+  if (text.includes("麦") || text.includes("谷物")) return "wheat";
+  if (text.includes("猫头鹰") || text.includes("盾")) return "owlShield";
+  if (text.includes("弓")) return text.includes("月") ? "moonBow" : "bow";
+  if (text.includes("里拉") || text.includes("音乐")) return "lyre";
+  if (text.includes("葡萄") || text.includes("酒")) return "grapesCup";
+  if (text.includes("火炬")) return "torch";
+  if (text.includes("蛇杖") || text.includes("蛇")) return "serpentStaff";
+  if (text.includes("天平")) return "scales";
+  if (text.includes("卷轴") || text.includes("书")) return "scroll";
+  if (text.includes("星") || text.includes("天文")) return "stars";
+  if (text.includes("海") || text.includes("浪")) return "wave";
+  if (text.includes("风")) return "wind";
+  if (text.includes("花")) return "flowers";
+  if (text.includes("面具")) return "mask";
+  if (text.includes("锁链")) return "chains";
+  if (text.includes("火")) return "flame";
+  if (text.includes("杯")) return "cup";
+  return "laurel";
+}
+
+function sceneSvg(profile) {
+  const { item, accent } = profile;
+  const group = item.group;
+  const rings = `<circle cx="360" cy="285" r="250" fill="none" stroke="${accent}" stroke-width="2" opacity="0.18"/><circle cx="360" cy="285" r="185" fill="none" stroke="${accent}" stroke-width="2" opacity="0.16"/>`;
+  if (group === "海洋与风") return `${rings}<path d="M0 820 C120 760 220 880 360 815 C500 750 580 858 720 800 L720 980 L0 980 Z" fill="${accent}" opacity="0.16"/><path d="M48 138 C150 108 240 128 330 102 C450 66 560 94 668 68" fill="none" stroke="#fffdf8" stroke-width="18" opacity="0.42"/>`;
+  if (group === "原初神") return `${rings}<path d="M80 160 L640 820" stroke="${accent}" stroke-width="70" opacity="0.08"/><circle cx="118" cy="122" r="8" fill="#fffdf8" opacity="0.9"/><circle cx="612" cy="162" r="6" fill="#fffdf8" opacity="0.8"/><circle cx="566" cy="742" r="7" fill="#fffdf8" opacity="0.75"/>`;
+  if (group === "命运与人格化") return `${rings}<path d="M95 160 C235 210 260 104 360 170 C470 244 540 144 635 196" fill="none" stroke="${accent}" stroke-width="8" opacity="0.22"/><path d="M122 812 C260 770 476 792 602 740" fill="none" stroke="${accent}" stroke-width="6" opacity="0.18"/>`;
+  if (group === "缪斯与美惠") return `${rings}<path d="M120 830 C180 760 258 780 316 712 C378 640 480 690 566 612" fill="none" stroke="${accent}" stroke-width="9" opacity="0.2"/><circle cx="178" cy="188" r="34" fill="#fffdf8" opacity="0.4"/><circle cx="564" cy="216" r="24" fill="#fffdf8" opacity="0.32"/>`;
+  if (group === "冥界与家宅") return `${rings}<path d="M0 800 C170 760 240 792 360 745 C482 698 560 742 720 690 L720 980 L0 980 Z" fill="#1f2430" opacity="0.13"/><path d="M155 170 C235 112 485 110 568 178" fill="none" stroke="${accent}" stroke-width="12" opacity="0.18"/>`;
+  return `${rings}<path d="M116 830 L604 830" stroke="${accent}" stroke-width="16" opacity="0.14"/><path d="M160 830 L220 184 L500 184 L560 830" stroke="${accent}" stroke-width="8" opacity="0.11" fill="none"/>`;
+}
+
+function auraSvg(profile) {
+  const winged = /wing|rainbow|dawn|nike|eros|iris|eos|wind/i.test(`${profile.prop} ${profile.item.id} ${profile.item.symbols.join(" ")}`);
+  if (winged) {
+    return `<path d="M348 326 C188 230 98 318 86 508 C188 430 260 450 337 556 Z" fill="#fffdf8" opacity="0.58"/><path d="M372 326 C532 230 622 318 634 508 C532 430 460 450 383 556 Z" fill="#fffdf8" opacity="0.58"/>`;
+  }
+  if (/night|star|sun|moon|light|cosmic|globe/.test(profile.prop)) {
+    return `<circle cx="360" cy="245" r="160" fill="none" stroke="${profile.metal}" stroke-width="18" opacity="0.22"/><circle cx="360" cy="245" r="112" fill="none" stroke="#fffdf8" stroke-width="7" opacity="0.45"/>`;
+  }
+  return `<path d="M240 336 C270 204 450 204 480 336 C458 300 264 300 240 336 Z" fill="#fffdf8" opacity="0.26"/>`;
+}
+
+function figureSvg(profile) {
+  const { accent, robe, metal, skin, hair, feminine, item } = profile;
+  const helmet = /athena|ares|enyo|deimos|phobos|spearShield|owlShield/.test(`${item.id} ${profile.prop}`);
+  const seaTail = /triton|glaucus|nereus|waveHorn/.test(`${item.id} ${profile.prop}`);
+  const goat = item.id === "pan";
+  const crown = /zeus|hera|hades|poseidon|cronus|rhea|atlas|gaia|uranus|tyche|oceanus|amphitrite/.test(item.id);
+  const torso = feminine
+    ? `<path d="M292 352 C316 326 404 326 428 352 L458 612 C414 652 306 652 262 612 Z" fill="${robe}"/><path d="M300 382 C330 414 392 414 420 382" fill="none" stroke="${accent}" stroke-width="11" opacity="0.55"/>`
+    : `<path d="M286 350 C316 324 404 324 434 350 L454 604 C414 642 306 642 266 604 Z" fill="${robe}"/><path d="M296 372 L424 372 L410 492 L310 492 Z" fill="${accent}" opacity="0.24"/>`;
+  const lower = seaTail
+    ? `<path d="M296 608 C355 676 386 730 370 812 C420 792 464 812 504 868 C404 866 302 858 216 882 C260 816 314 760 302 670 Z" fill="${accent}" opacity="0.62"/><path d="M300 688 C354 714 426 718 474 694" fill="none" stroke="#fffdf8" stroke-width="8" opacity="0.35"/>`
+    : goat
+      ? `<path d="M306 604 C292 680 282 752 250 838" fill="none" stroke="${hair}" stroke-width="28" stroke-linecap="round"/><path d="M414 604 C428 680 438 752 470 838" fill="none" stroke="${hair}" stroke-width="28" stroke-linecap="round"/><path d="M232 850 L284 850" stroke="${hair}" stroke-width="18" stroke-linecap="round"/><path d="M436 850 L488 850" stroke="${hair}" stroke-width="18" stroke-linecap="round"/>`
+      : `<path d="M302 604 C288 694 278 768 252 846" fill="none" stroke="${robe}" stroke-width="34" stroke-linecap="round"/><path d="M418 604 C432 694 442 768 468 846" fill="none" stroke="${robe}" stroke-width="34" stroke-linecap="round"/><path d="M218 858 L292 858" stroke="${accent}" stroke-width="16" stroke-linecap="round" opacity="0.52"/><path d="M428 858 L502 858" stroke="${accent}" stroke-width="16" stroke-linecap="round" opacity="0.52"/>`;
+  const headpiece = helmet
+    ? `<path d="M292 212 C318 150 404 150 428 212 L420 226 C390 196 330 196 300 226 Z" fill="${metal}"/><path d="M358 136 C378 170 392 188 394 218" stroke="${accent}" stroke-width="14" stroke-linecap="round"/>`
+    : crown
+      ? `<path d="M292 194 L316 158 L342 192 L366 154 L394 192 L420 158 L430 202 Z" fill="${metal}"/>`
+      : `<path d="M290 206 C310 154 412 154 430 206 C402 180 320 180 290 206 Z" fill="${hair}"/>`;
+  const hairShape = feminine
+    ? `<path d="M276 220 C280 146 438 146 444 222 C428 330 292 330 276 220 Z" fill="${hair}" opacity="0.94"/>`
+    : `<path d="M292 214 C302 162 418 162 428 214 C394 198 326 198 292 214 Z" fill="${hair}"/>`;
+  return `
+    <ellipse cx="360" cy="882" rx="158" ry="38" fill="#1f2430" opacity="0.16"/>
+    ${hairShape}
+    <circle cx="360" cy="236" r="58" fill="${skin}"/>
+    ${headpiece}
+    <path d="M338 258 C350 270 372 270 384 258" fill="none" stroke="#5a342b" stroke-width="6" stroke-linecap="round" opacity="0.55"/>
+    <path d="M292 352 C240 402 218 472 196 552" fill="none" stroke="${skin}" stroke-width="30" stroke-linecap="round"/>
+    <path d="M428 352 C480 402 502 472 524 552" fill="none" stroke="${skin}" stroke-width="30" stroke-linecap="round"/>
+    ${torso}
+    <path d="M272 430 L448 430" stroke="${metal}" stroke-width="13" stroke-linecap="round" opacity="0.82"/>
+    ${lower}
+  `;
+}
+
+function propSvg(profile) {
+  const { prop, accent, metal } = profile;
+  const common = { accent, metal };
+  const propMap = {
+    lightning: lightningSvg, peacock: peacockSvg, trident: tridentSvg, wheat: wheatSvg, owlShield: owlShieldSvg,
+    sunLyre: sunLyreSvg, moonBow: moonBowSvg, spearShield: spearShieldSvg, shellRose: shellRoseSvg,
+    hammerAnvil: hammerAnvilSvg, caduceus: caduceusSvg, grapesCup: grapesCupSvg, bident: bidentSvg,
+    hearth: hearthSvg, pomegranate: pomegranateSvg, sunChariot: sunChariotSvg, moon: moonSvg, dawn: dawnSvg,
+    twinTorches: twinTorchesSvg, pipes: pipesSvg, serpentStaff: serpentStaffSvg, poppy: poppySvg,
+    downTorch: downTorchSvg, scales: scalesSvg, cornucopia: cornucopiaSvg, scalesSword: scalesSwordSvg,
+    lionDrum: drumSvg, sickle: sickleSvg, waveHorn: waveSvg, globe: globeSvg, fireChain: fireChainSvg,
+    earthFruit: earthFruitSvg, starScythe: starScytheSvg, nightStars: starsSvg, void: voidSvg,
+    cosmicEgg: cosmicEggSvg, spindle: spindleSvg, measureThread: measureThreadSvg, shears: shearsSvg,
+    apple: appleSvg, necklace: necklaceSvg, globeCompass: globeCompassSvg, bow: moonBowSvg, lyre: sunLyreSvg,
+    torch: twinTorchesSvg, scroll: scrollSvg, stars: starsSvg, wave: waveSvg, wind: windSvg, flowers: flowersSvg,
+    mask: maskSvg, chains: fireChainSvg, flame: hearthSvg, cup: grapesCupSvg, laurel: laurelSvg
+  };
+  return (propMap[prop] || laurelSvg)(common);
+}
+
+function lightningSvg({ metal }) {
+  return `<path d="M518 132 L454 348 L520 328 L448 612 L596 286 L526 304 L588 132 Z" fill="${metal}" stroke="#fff5ce" stroke-width="7"/>`;
+}
+
+function tridentSvg({ accent, metal }) {
+  return `<path d="M520 148 L520 760" stroke="${metal}" stroke-width="14" stroke-linecap="round"/><path d="M472 178 L520 126 L568 178 M480 138 L480 224 M560 138 L560 224" fill="none" stroke="${metal}" stroke-width="13" stroke-linecap="round"/><path d="M496 392 C570 356 620 360 672 402" fill="none" stroke="${accent}" stroke-width="10" opacity="0.55"/>`;
+}
+
+function peacockSvg({ accent, metal }) {
+  return `<path d="M168 254 C92 170 112 86 226 96 C280 108 308 160 296 236 C260 186 218 186 168 254 Z" fill="${accent}" opacity="0.32"/><circle cx="214" cy="154" r="20" fill="${metal}"/><circle cx="214" cy="154" r="8" fill="#1f2430"/><path d="M236 510 C170 442 150 330 196 248" fill="none" stroke="${accent}" stroke-width="12" stroke-linecap="round"/>`;
+}
+
+function wheatSvg({ accent, metal }) {
+  return `<path d="M196 250 L196 724" stroke="${accent}" stroke-width="11" stroke-linecap="round"/><path d="M196 320 C146 284 148 238 194 220 C242 244 238 290 196 320 Z M196 410 C146 374 148 328 194 310 C242 334 238 380 196 410 Z M196 500 C146 464 148 418 194 400 C242 424 238 470 196 500 Z" fill="${metal}" opacity="0.9"/>`;
+}
+
+function owlShieldSvg({ accent, metal }) {
+  return `<path d="M168 402 C230 372 282 410 282 486 C282 560 230 618 168 642 C106 618 54 560 54 486 C54 410 106 372 168 402 Z" fill="${accent}" opacity="0.76"/><circle cx="146" cy="478" r="17" fill="#fffdf8"/><circle cx="190" cy="478" r="17" fill="#fffdf8"/><path d="M168 496 L154 526 L182 526 Z" fill="${metal}"/><path d="M122 444 L146 420 L170 444 L194 420 L218 444" fill="none" stroke="${metal}" stroke-width="8" stroke-linecap="round"/>`;
+}
+
+function sunLyreSvg({ accent, metal }) {
+  return `<circle cx="538" cy="190" r="52" fill="${metal}" opacity="0.78"/><path d="M492 420 C492 330 584 330 584 420 C584 498 492 498 492 420 Z" fill="none" stroke="${accent}" stroke-width="13"/><path d="M512 360 L512 492 M536 346 L536 506 M560 360 L560 492" stroke="${metal}" stroke-width="5"/>`;
+}
+
+function moonBowSvg({ accent, metal }) {
+  return `<path d="M544 150 C498 182 498 250 544 282 C488 270 456 226 466 182 C474 146 504 126 544 150 Z" fill="${metal}" opacity="0.78"/><path d="M160 304 C238 428 238 570 160 694" fill="none" stroke="${accent}" stroke-width="14" stroke-linecap="round"/><path d="M160 304 L160 694" stroke="${metal}" stroke-width="5"/><path d="M166 500 L298 468" stroke="${metal}" stroke-width="7" stroke-linecap="round"/>`;
+}
+
+function spearShieldSvg({ accent, metal }) {
+  return `<path d="M540 158 L540 760" stroke="${metal}" stroke-width="11" stroke-linecap="round"/><path d="M540 120 L512 180 L568 180 Z" fill="${metal}"/><path d="M172 402 C238 396 280 438 272 512 C264 588 214 626 172 646 C130 626 80 588 72 512 C64 438 106 396 172 402 Z" fill="${accent}" opacity="0.78"/><path d="M116 510 L228 510" stroke="${metal}" stroke-width="10" opacity="0.7"/>`;
+}
+
+function shellRoseSvg({ accent, metal }) {
+  return `<path d="M516 520 C470 470 470 390 516 342 C562 390 562 470 516 520 Z" fill="${metal}" opacity="0.58"/><path d="M452 520 C486 434 546 434 580 520" fill="none" stroke="${accent}" stroke-width="12"/><circle cx="188" cy="300" r="28" fill="#c65f6d"/><path d="M188 272 C230 292 218 334 188 328 C158 334 146 292 188 272 Z" fill="#e8909a"/>`;
+}
+
+function hammerAnvilSvg({ accent, metal }) {
+  return `<path d="M504 278 L596 370" stroke="${metal}" stroke-width="18" stroke-linecap="round"/><path d="M456 244 L528 172 L574 218 L502 290 Z" fill="${accent}"/><path d="M118 682 L270 682 L232 746 L154 746 Z" fill="${metal}" opacity="0.86"/><path d="M134 642 L258 642 L270 682 L118 682 Z" fill="${accent}" opacity="0.72"/>`;
+}
+
+function caduceusSvg({ accent, metal }) {
+  return `<path d="M528 170 L528 728" stroke="${metal}" stroke-width="10" stroke-linecap="round"/><path d="M486 232 C420 190 418 282 528 302 C638 322 636 414 488 378 M570 232 C636 190 638 282 528 302 C418 322 420 414 568 378" fill="none" stroke="${accent}" stroke-width="8" stroke-linecap="round"/><path d="M492 180 C460 152 424 154 398 184 M564 180 C596 152 632 154 658 184" fill="none" stroke="${metal}" stroke-width="9" stroke-linecap="round"/>`;
+}
+
+function grapesCupSvg({ accent, metal }) {
+  return `<path d="M508 368 L594 368 C586 438 562 472 552 528 L550 600 L580 600" fill="none" stroke="${metal}" stroke-width="11" stroke-linecap="round"/><circle cx="166" cy="286" r="18" fill="#6e375c"/><circle cx="198" cy="306" r="18" fill="#7b4169"/><circle cx="150" cy="326" r="18" fill="#58304f"/><circle cx="184" cy="348" r="18" fill="#734071"/><path d="M164 264 C170 222 214 218 238 238" fill="none" stroke="${accent}" stroke-width="8" stroke-linecap="round"/>`;
+}
+
+function bidentSvg({ metal }) {
+  return `<path d="M518 160 L518 760" stroke="${metal}" stroke-width="13" stroke-linecap="round"/><path d="M482 168 L518 120 L554 168 M486 130 L486 228 M550 130 L550 228" fill="none" stroke="${metal}" stroke-width="12" stroke-linecap="round"/><path d="M144 560 L214 560 L214 630 L144 630 Z M214 594 L264 594" fill="none" stroke="${metal}" stroke-width="10" stroke-linejoin="round"/>`;
+}
+
+function hearthSvg({ accent, metal }) {
+  return `<path d="M158 628 C126 568 176 526 166 478 C218 528 232 572 206 628 Z" fill="${metal}"/><path d="M194 634 C172 590 210 560 206 524 C252 570 258 608 232 634 Z" fill="${accent}"/><path d="M100 660 L276 660 L250 730 L126 730 Z" fill="${accent}" opacity="0.42"/>`;
+}
+
+function pomegranateSvg({ accent, metal }) {
+  return `<circle cx="172" cy="420" r="54" fill="#9d2f3f"/><path d="M148 370 L172 338 L196 370" fill="${metal}"/><circle cx="152" cy="420" r="7" fill="#f5d6a2"/><circle cx="178" cy="440" r="7" fill="#f5d6a2"/><circle cx="196" cy="410" r="7" fill="#f5d6a2"/><path d="M526 600 C566 552 610 548 650 594" fill="none" stroke="${accent}" stroke-width="9" stroke-linecap="round"/>`;
+}
+
+function sunChariotSvg({ metal }) {
+  return `<circle cx="546" cy="178" r="60" fill="${metal}" opacity="0.86"/><path d="M478 178 L614 178 M546 110 L546 246 M500 132 L592 224 M592 132 L500 224" stroke="#fff5ce" stroke-width="8" stroke-linecap="round"/><path d="M116 652 C198 604 262 612 308 662" fill="none" stroke="${metal}" stroke-width="10"/><circle cx="148" cy="688" r="22" fill="none" stroke="${metal}" stroke-width="9"/><circle cx="266" cy="688" r="22" fill="none" stroke="${metal}" stroke-width="9"/>`;
+}
+
+function moonSvg({ metal }) {
+  return `<path d="M548 150 C488 196 492 292 556 334 C468 326 412 258 424 196 C434 144 480 118 548 150 Z" fill="${metal}" opacity="0.8"/>`;
+}
+
+function dawnSvg({ accent, metal }) {
+  return `<path d="M102 252 C230 168 482 168 618 252" fill="none" stroke="${metal}" stroke-width="18" opacity="0.55"/><path d="M120 284 C244 224 478 224 600 284" fill="none" stroke="${accent}" stroke-width="10" opacity="0.45"/>`;
+}
+
+function twinTorchesSvg({ accent, metal }) {
+  return `<path d="M174 310 L174 692 M546 310 L546 692" stroke="${metal}" stroke-width="10" stroke-linecap="round"/><path d="M150 298 C132 254 174 226 166 190 C214 234 222 276 190 304 Z M522 298 C504 254 546 226 538 190 C586 234 594 276 562 304 Z" fill="${accent}"/><path d="M166 292 C158 260 182 242 184 222 C206 254 202 282 186 298 Z M538 292 C530 260 554 242 556 222 C578 254 574 282 558 298 Z" fill="${metal}"/>`;
+}
+
+function pipesSvg({ accent, metal }) {
+  return `<path d="M152 374 L152 560 M178 350 L178 560 M204 332 L204 560 M230 356 L230 560 M256 386 L256 560" stroke="${metal}" stroke-width="14" stroke-linecap="round"/><path d="M136 560 L272 560" stroke="${accent}" stroke-width="12" stroke-linecap="round"/>`;
+}
+
+function serpentStaffSvg({ accent, metal }) {
+  return `<path d="M532 168 L532 760" stroke="${metal}" stroke-width="10" stroke-linecap="round"/><path d="M494 250 C438 218 436 300 532 318 C628 336 626 418 496 394 C432 382 450 476 532 488 C614 500 628 574 502 558" fill="none" stroke="${accent}" stroke-width="10" stroke-linecap="round"/><circle cx="498" cy="558" r="10" fill="${accent}"/>`;
+}
+
+function poppySvg({ accent, metal }) {
+  return `<path d="M176 320 C160 254 226 226 260 274 C302 232 360 284 318 338 C350 390 276 422 244 368 C202 420 130 384 176 320 Z" fill="${accent}" opacity="0.82"/><circle cx="244" cy="326" r="18" fill="${metal}"/><path d="M244 344 L244 650" stroke="${metal}" stroke-width="9" stroke-linecap="round"/>`;
+}
+
+function downTorchSvg({ accent, metal }) {
+  return `<path d="M190 300 L190 760" stroke="${metal}" stroke-width="12" stroke-linecap="round"/><path d="M164 746 C140 690 196 664 184 622 C236 668 242 720 206 758 Z" fill="${accent}"/>`;
+}
+
+function scalesSvg({ accent, metal }) {
+  return `<path d="M528 224 L528 642" stroke="${metal}" stroke-width="11"/><path d="M440 310 L616 310" stroke="${metal}" stroke-width="10" stroke-linecap="round"/><path d="M466 310 L430 420 L502 420 Z M590 310 L554 420 L626 420 Z" fill="none" stroke="${accent}" stroke-width="8" stroke-linejoin="round"/>`;
+}
+
+function cornucopiaSvg({ accent, metal }) {
+  return `<path d="M130 536 C190 420 292 378 342 416 C280 462 262 562 306 662 C226 650 150 610 130 536 Z" fill="${accent}" opacity="0.72"/><circle cx="260" cy="398" r="18" fill="#9d2f3f"/><circle cx="292" cy="412" r="16" fill="${metal}"/><path d="M302 372 C340 338 388 354 408 390" fill="none" stroke="#6f7e3e" stroke-width="9" stroke-linecap="round"/>`;
+}
+
+function scalesSwordSvg({ accent, metal }) {
+  return `${scalesSvg({ accent, metal })}<path d="M170 198 L170 692" stroke="${metal}" stroke-width="10"/><path d="M170 150 L142 220 L198 220 Z" fill="${metal}"/><path d="M132 300 L208 300" stroke="${accent}" stroke-width="10" stroke-linecap="round"/>`;
+}
+
+function drumSvg({ accent, metal }) {
+  return `<ellipse cx="174" cy="530" rx="76" ry="48" fill="${metal}" opacity="0.86"/><path d="M104 530 C120 590 228 590 244 530" fill="none" stroke="${accent}" stroke-width="12"/><path d="M520 620 C570 568 630 604 632 674 C574 640 538 666 520 620 Z" fill="${accent}" opacity="0.38"/>`;
+}
+
+function sickleSvg({ accent, metal }) {
+  return `<path d="M520 164 C618 244 596 408 484 464 C550 358 538 262 454 202 Z" fill="${metal}" opacity="0.86"/><path d="M452 206 L546 612" stroke="${accent}" stroke-width="14" stroke-linecap="round"/>`;
+}
+
+function waveSvg({ accent, metal }) {
+  return `<path d="M110 606 C170 510 282 548 284 632 C238 590 184 620 166 682 C222 682 284 710 316 760 C218 742 140 704 110 606 Z" fill="${accent}" opacity="0.54"/><path d="M474 322 C546 276 612 302 638 366" fill="none" stroke="${metal}" stroke-width="11" stroke-linecap="round"/>`;
+}
+
+function globeSvg({ accent, metal }) {
+  return `<circle cx="360" cy="182" r="82" fill="none" stroke="${metal}" stroke-width="12"/><path d="M278 182 L442 182 M360 100 C398 142 398 222 360 264 M360 100 C322 142 322 222 360 264" fill="none" stroke="${accent}" stroke-width="7" opacity="0.65"/><path d="M314 270 L284 390 M406 270 L436 390" stroke="${metal}" stroke-width="10" stroke-linecap="round"/>`;
+}
+
+function fireChainSvg({ accent, metal }) {
+  return `${hearthSvg({ accent, metal })}<path d="M500 380 C548 344 600 378 590 430 C580 482 516 492 494 446 M560 448 C512 484 460 450 470 398 C480 346 544 336 566 382" fill="none" stroke="${metal}" stroke-width="12" stroke-linecap="round"/>`;
+}
+
+function earthFruitSvg({ accent, metal }) {
+  return `<circle cx="180" cy="454" r="70" fill="${accent}" opacity="0.55"/><path d="M124 456 C176 420 206 496 258 452" fill="none" stroke="#6f7e3e" stroke-width="12"/><circle cx="222" cy="382" r="24" fill="${metal}"/>`;
+}
+
+function starScytheSvg({ accent, metal }) {
+  return `${sickleSvg({ accent, metal })}${starsSvg({ accent, metal })}`;
+}
+
+function starsSvg({ accent, metal }) {
+  return `<path d="M174 186 L190 226 L232 230 L200 256 L210 298 L174 276 L138 298 L148 256 L116 230 L158 226 Z" fill="${metal}" opacity="0.86"/><path d="M546 310 L556 336 L584 338 L562 356 L570 384 L546 370 L522 384 L530 356 L508 338 L536 336 Z" fill="${accent}" opacity="0.72"/>`;
+}
+
+function voidSvg({ accent }) {
+  return `<circle cx="360" cy="286" r="118" fill="#1f2430" opacity="0.22"/><path d="M262 286 C306 196 414 196 458 286 C414 376 306 376 262 286 Z" fill="none" stroke="${accent}" stroke-width="14" opacity="0.6"/>`;
+}
+
+function cosmicEggSvg({ accent, metal }) {
+  return `<ellipse cx="520" cy="286" rx="62" ry="94" fill="#fffdf8" opacity="0.75" stroke="${metal}" stroke-width="10"/><path d="M466 286 C508 230 548 342 590 286" fill="none" stroke="${accent}" stroke-width="9"/><path d="M492 196 C440 250 440 328 492 382 M548 196 C600 250 600 328 548 382" fill="none" stroke="${accent}" stroke-width="7" opacity="0.58"/>`;
+}
+
+function spindleSvg({ accent, metal }) {
+  return `<path d="M528 204 L528 700" stroke="${metal}" stroke-width="9"/><ellipse cx="528" cy="452" rx="28" ry="82" fill="${accent}" opacity="0.52"/><path d="M528 234 C448 332 468 520 384 640" fill="none" stroke="#fffdf8" stroke-width="6"/>`;
+}
+
+function measureThreadSvg({ accent, metal }) {
+  return `<path d="M130 404 C260 344 450 496 590 390" fill="none" stroke="${metal}" stroke-width="7"/><path d="M162 456 L336 456" stroke="${accent}" stroke-width="11" stroke-linecap="round"/><path d="M184 436 L184 476 M232 436 L232 476 M280 436 L280 476 M328 436 L328 476" stroke="${metal}" stroke-width="5"/>`;
+}
+
+function shearsSvg({ accent, metal }) {
+  return `<circle cx="496" cy="512" r="28" fill="none" stroke="${metal}" stroke-width="10"/><circle cx="560" cy="512" r="28" fill="none" stroke="${metal}" stroke-width="10"/><path d="M516 492 L610 320 M540 492 L452 320" stroke="${accent}" stroke-width="12" stroke-linecap="round"/>`;
+}
+
+function appleSvg({ accent, metal }) {
+  return `<circle cx="530" cy="400" r="46" fill="${metal}"/><path d="M530 354 C536 314 574 310 594 334" fill="none" stroke="${accent}" stroke-width="9" stroke-linecap="round"/><path d="M520 400 L540 400" stroke="#fff5ce" stroke-width="8" stroke-linecap="round"/>`;
+}
+
+function necklaceSvg({ metal }) {
+  return `<path d="M286 388 C316 448 404 448 434 388" fill="none" stroke="${metal}" stroke-width="11" stroke-linecap="round"/><circle cx="360" cy="444" r="18" fill="${metal}"/>`;
+}
+
+function globeCompassSvg({ accent, metal }) {
+  return `${globeSvg({ accent, metal })}<path d="M144 520 L252 382 M252 382 L230 456 M252 382 L178 404" stroke="${accent}" stroke-width="10" stroke-linecap="round" stroke-linejoin="round"/>`;
+}
+
+function scrollSvg({ accent, metal }) {
+  return `<path d="M122 380 L296 380 L296 570 L122 570 Z" fill="#fff8e8" stroke="${metal}" stroke-width="9"/><path d="M154 432 L264 432 M154 474 L264 474 M154 516 L230 516" stroke="${accent}" stroke-width="7" stroke-linecap="round"/>`;
+}
+
+function windSvg({ accent, metal }) {
+  return `<path d="M92 324 C188 272 260 300 286 354 C226 340 178 356 138 406 M414 266 C514 214 616 252 638 334 C566 304 510 322 464 382" fill="none" stroke="${accent}" stroke-width="13" stroke-linecap="round" opacity="0.65"/><path d="M190 590 C270 556 352 570 414 626" fill="none" stroke="${metal}" stroke-width="9" stroke-linecap="round"/>`;
+}
+
+function flowersSvg({ accent, metal }) {
+  return `<circle cx="176" cy="374" r="20" fill="${metal}"/><path d="M176 332 C216 350 216 398 176 416 C136 398 136 350 176 332 Z" fill="${accent}" opacity="0.7"/><path d="M176 416 L176 664" stroke="#6f7e3e" stroke-width="9"/><path d="M176 508 C222 476 254 500 260 536" fill="none" stroke="#6f7e3e" stroke-width="8" stroke-linecap="round"/>`;
+}
+
+function maskSvg({ accent, metal }) {
+  return `<path d="M504 356 C574 322 626 364 620 444 C614 526 558 566 504 586 C450 566 394 526 388 444 C382 364 434 322 504 356 Z" fill="${accent}" opacity="0.76"/><circle cx="474" cy="434" r="15" fill="#fffdf8"/><circle cx="536" cy="434" r="15" fill="#fffdf8"/><path d="M464 512 C494 488 532 488 562 512" fill="none" stroke="${metal}" stroke-width="8" stroke-linecap="round"/>`;
+}
+
+function laurelSvg({ accent, metal }) {
+  return `<path d="M164 410 C122 500 144 606 234 678" fill="none" stroke="${accent}" stroke-width="10"/><path d="M154 448 C196 430 210 388 188 360 M146 510 C194 500 222 464 214 430 M166 574 C212 574 246 544 250 506 M204 636 C246 624 278 590 286 552" fill="none" stroke="${metal}" stroke-width="9" stroke-linecap="round"/>`;
+}
+
 function openDetail(id) {
   const item = deities.find((entry) => entry.id === id);
   if (!item) return;
+  const profile = visualProfile(item);
   els.panel.innerHTML = `
     <div class="detail-art art-frame" data-image-id="${escapeHtml(item.id)}">
       <div class="image-placeholder">${escapeHtml(item.name.slice(0, 1))}</div>
-      <img alt="${escapeHtml(item.name)} 的艺术形象" hidden>
+      <img alt="${escapeHtml(item.name)} 的现代生成全身形象" hidden>
     </div>
     <div class="detail-body">
       <div class="detail-topline">
@@ -368,14 +705,18 @@ function openDetail(id) {
       </div>
       ${tagList(item.domains, "domain-list")}
       ${tagList(item.symbols, "symbol-list")}
+      <section class="generated-box">
+        <h3>生成全身形象</h3>
+        <p>${escapeHtml(profile.description)}</p>
+      </section>
       <p class="summary">${escapeHtml(item.summary)}</p>
       <section class="artwork-box">
-        <h3>艺术作品知识点</h3>
+        <h3>经典艺术作品知识点</h3>
         <p><strong>${escapeHtml(item.artwork.title)}</strong></p>
         <p>${escapeHtml(item.artwork.artist)} · ${escapeHtml(item.artwork.year)}</p>
         <p>${escapeHtml(item.artwork.note)}</p>
       </section>
-      <a class="detail-link" href="${wikiUrl(item)}" target="_blank" rel="noreferrer">打开英文百科图源</a>
+      <a class="detail-link" href="${wikiUrl(item)}" target="_blank" rel="noreferrer">打开英文百科与图源参考</a>
     </div>
   `;
 
