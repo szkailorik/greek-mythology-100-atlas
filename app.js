@@ -114,7 +114,8 @@ let imageObserver = null;
 const rasterPortraitIds = new Set([
   "zeus", "hera", "poseidon", "demeter", "athena", "apollo", "artemis", "ares", "aphrodite",
   "hephaestus", "hermes", "dionysus", "hades", "hestia", "persephone", "eros", "nike",
-  "hebe", "iris", "helios", "selene", "eos", "hecate", "pan", "asclepius"
+  "hebe", "iris", "helios", "selene", "eos", "hecate", "pan", "asclepius", "hygieia",
+  "hypnos", "thanatos", "morpheus", "nemesis", "tyche", "themis", "leto", "rhea", "cronus"
 ]);
 
 const groupThemes = {
@@ -252,7 +253,7 @@ function renderCard(item) {
     <article class="deity-card" data-id="${escapeHtml(item.id)}">
       <div class="art-frame" data-image-id="${escapeHtml(item.id)}">
         <div class="image-placeholder">${escapeHtml(item.name.slice(0, 1))}</div>
-        <img alt="${escapeHtml(item.name)} 的现代生成全身形象" loading="lazy" hidden>
+        <img alt="${escapeHtml(item.name)} 的现代生成全身形象" hidden>
         <span class="rank-badge">#${item.rank}</span>
         <span class="group-badge">${escapeHtml(item.group)}</span>
       </div>
@@ -283,6 +284,10 @@ function tagList(items, className) {
 
 function hydrateImages() {
   const frames = [...document.querySelectorAll("[data-image-id]")];
+  const eagerFrames = frames.slice(0, 8);
+  const lazyFrames = frames.slice(8);
+  eagerFrames.forEach(loadImage);
+
   if ("IntersectionObserver" in window) {
     imageObserver = new IntersectionObserver((entries) => {
       entries.forEach((entry) => {
@@ -292,9 +297,9 @@ function hydrateImages() {
         }
       });
     }, { rootMargin: "220px" });
-    frames.forEach((frame) => imageObserver.observe(frame));
+    lazyFrames.forEach((frame) => imageObserver.observe(frame));
   } else {
-    frames.forEach(loadImage);
+    lazyFrames.forEach(loadImage);
   }
 }
 
