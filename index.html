@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Greek Mythology 100 | 希腊神话百神图鉴</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <header class="app-header">
+      <div class="header-main">
+        <div>
+          <p class="eyebrow">Greek Mythology Atlas</p>
+          <h1>希腊神话百神图鉴</h1>
+        </div>
+        <div class="header-stats" aria-label="目录统计">
+          <span><strong id="totalCount">100</strong> 位神祇</span>
+          <span><strong id="visibleCount">100</strong> 个结果</span>
+        </div>
+      </div>
+
+      <div class="controls" aria-label="目录工具">
+        <label class="control search-control">
+          <span>搜索</span>
+          <input id="searchInput" type="search" autocomplete="off" placeholder="Zeus / 宙斯 / 雷霆" />
+        </label>
+
+        <label class="control">
+          <span>排序</span>
+          <select id="sortSelect">
+            <option value="rank">知名度</option>
+            <option value="name">英文名</option>
+            <option value="group">类别</option>
+          </select>
+        </label>
+
+        <label class="control voice-control">
+          <span>语音</span>
+          <select id="voiceSelect" aria-label="英文语音"></select>
+        </label>
+
+        <button class="icon-button" id="stopSpeech" type="button" aria-label="停止朗读" title="停止朗读">■</button>
+      </div>
+    </header>
+
+    <main>
+      <nav class="filters" id="groupFilters" aria-label="神祇类别"></nav>
+      <section class="catalog" id="catalog" aria-live="polite"></section>
+    </main>
+
+    <dialog class="detail-dialog" id="detailDialog">
+      <article class="detail-panel" id="detailPanel"></article>
+    </dialog>
+
+    <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+    <footer class="site-footer">
+      <span>原创中文简介；图片通过 Wikipedia/Wikimedia 页面动态加载。</span>
+      <a href="开发文档.md">开发文档</a>
+    </footer>
+
+    <script src="app.js" defer></script>
+  </body>
+</html>
