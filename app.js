@@ -118,7 +118,8 @@ const rasterPortraitIds = new Set([
   "hypnos", "thanatos", "morpheus", "nemesis", "tyche", "themis", "leto", "rhea", "cronus",
   "oceanus", "tethys", "hyperion", "theia", "coeus", "phoebe", "iapetus", "crius", "mnemosyne",
   "prometheus", "epimetheus", "atlas", "metis", "dione", "astraeus", "amphitrite", "triton",
-  "proteus", "nereus", "thetis"
+  "proteus", "nereus", "thetis", "galatea", "boreas", "zephyrus", "notus", "eurus", "aeolus",
+  "glaucus", "leucothea", "gaia", "uranus"
 ]);
 
 const groupThemes = {
