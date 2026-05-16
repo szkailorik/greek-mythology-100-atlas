@@ -149,6 +149,7 @@ const feminineIds = new Set([
 const deityStories = window.mythStories || {};
 const deityLineage = window.mythLineage || {};
 const lineageSources = window.mythLineageSources || [];
+const lineageOverview = window.mythLineageOverview || [];
 
 const els = {
   totalCount: document.querySelector("#totalCount"),
@@ -158,6 +159,7 @@ const els = {
   voiceSelect: document.querySelector("#voiceSelect"),
   stopSpeech: document.querySelector("#stopSpeech"),
   filters: document.querySelector("#groupFilters"),
+  lineageBoard: document.querySelector("#lineageBoard"),
   catalog: document.querySelector("#catalog"),
   dialog: document.querySelector("#detailDialog"),
   panel: document.querySelector("#detailPanel"),
@@ -233,6 +235,59 @@ function renderFilters() {
       return `<button class="filter-button" type="button" data-group="${escapeHtml(group)}" aria-pressed="${group === state.group}">${escapeHtml(group)} ${count}</button>`;
     })
     .join("");
+}
+
+function renderLineageBoard() {
+  if (!els.lineageBoard || !lineageOverview.length) return;
+  els.lineageBoard.innerHTML = `
+    <div class="lineage-board-head">
+      <div>
+        <p class="eyebrow">Family Lines</p>
+        <h2>谱系主干板</h2>
+      </div>
+      <p>把最容易混乱的关系拆成五条主线：先看父母和后代，再点进详情看异说。</p>
+    </div>
+    <div class="lineage-board-grid">
+      ${lineageOverview.map(renderOverviewGroup).join("")}
+    </div>
+  `;
+}
+
+function renderOverviewGroup(group) {
+  return `
+    <article class="lineage-board-group">
+      <div class="lineage-board-title">
+        <h3>${escapeHtml(group.title)}</h3>
+        <p>${escapeHtml(group.subtitle)}</p>
+      </div>
+      <div class="lineage-clusters">
+        ${(group.clusters || []).map(renderOverviewCluster).join("")}
+      </div>
+    </article>
+  `;
+}
+
+function renderOverviewCluster(cluster) {
+  return `
+    <div class="lineage-cluster">
+      <div class="cluster-side">${renderOverviewNodes(cluster.fromIds, cluster.fromNames, "源头")}</div>
+      <div class="cluster-relation">${escapeHtml(cluster.relation)}</div>
+      <div class="cluster-side">${renderOverviewNodes(cluster.toIds, cluster.toNames, "结果")}</div>
+      <p>${escapeHtml(cluster.note)}</p>
+    </div>
+  `;
+}
+
+function renderOverviewNodes(ids = [], names = [], emptyText) {
+  const nodes = [
+    ...ids.map((id) => {
+      const item = deities.find((entry) => entry.id === id);
+      if (!item) return `<span class="overview-node external">${escapeHtml(id)}</span>`;
+      return `<button class="overview-node" type="button" data-detail="${escapeHtml(item.id)}">${escapeHtml(item.name)}<span>${escapeHtml(item.cn)}</span></button>`;
+    }),
+    ...names.map((name) => `<span class="overview-node external">${escapeHtml(name)}</span>`)
+  ];
+  return nodes.length ? nodes.join("") : `<span class="overview-node muted">${escapeHtml(emptyText)}</span>`;
 }
 
 function getVisibleItems() {
@@ -1066,6 +1121,7 @@ function bindEvents() {
 }
 
 function init() {
+  renderLineageBoard();
   renderFilters();
   renderCatalog();
   populateVoices();

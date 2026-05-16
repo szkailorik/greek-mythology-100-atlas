@@ -1,5 +1,14 @@
 (() => {
   const story = (titleZh, titleEn, zh, en) => ({ titleZh, titleEn, zh, en });
+  const overview = (title, subtitle, clusters) => ({ title, subtitle, clusters });
+  const cluster = (fromIds, relation, toIds, note, fromNames = [], toNames = []) => ({
+    fromIds,
+    fromNames,
+    relation,
+    toIds,
+    toNames,
+    note
+  });
   const lineage = (data) => ({
     parents: [],
     parentNames: [],
@@ -231,5 +240,42 @@
   window.mythLineageSources = [
     { label: "Theoi Greek Gods Family Tree", url: "https://www.theoi.com/Tree.html" },
     { label: "Hesiod, Theogony, Perseus", url: "https://www.perseus.tufts.edu/hopper/text?doc=Perseus%3Atext%3A1999.01.0130%3Acard%3D104" }
+  ];
+
+  window.mythLineageOverview = [
+    overview("原初层", "先理解宇宙如何从裂隙、黑夜、大地和天空展开。", [
+      cluster(["chaos"], "生出", ["nyx", "erebus"], "Chaos 更像最初裂隙；Nyx 与 Erebus 明确由它生出。", [], ["Gaia / Tartarus follow in the cosmogony"]),
+      cluster(["nyx", "erebus"], "生出", ["aether", "hemera"], "黑夜与幽暗反而生出明亮空气和白昼。"),
+      cluster(["gaia"], "独自生出", ["uranus", "pontus"], "Gaia 是大地母体，Uranus 是天空，Pontus 是海本身。"),
+      cluster(["gaia", "uranus"], "生出", ["cronus", "rhea", "oceanus", "tethys", "hyperion", "theia", "coeus", "phoebe", "iapetus", "mnemosyne", "themis"], "这批神是泰坦主干，也是后续奥林匹斯与许多自然神的祖先。")
+    ]),
+    overview("泰坦到奥林匹斯", "神族更替的主线：天空与大地之后，是泰坦王权，再到宙斯秩序。", [
+      cluster(["cronus", "rhea"], "生出", ["hestia", "demeter", "hera", "hades", "poseidon", "zeus"], "这六位是最关键的奥林匹斯兄弟姐妹，决定天空、海、冥界、家宅和农业秩序。"),
+      cluster(["zeus"], "推翻", ["cronus"], "这是王权更替，不是亲子生育；宙斯逼克洛诺斯吐出兄弟姐妹后建立新秩序。"),
+      cluster(["zeus", "hera"], "生出", ["ares", "hebe", "eileithyia", "hephaestus"], "赫拉系子女集中在战争、青春、分娩和锻造等奥林匹斯功能。"),
+      cluster(["hades", "persephone"], "统治", [], "冥界谱系更像政治婚姻与王后身份，核心是死亡秩序与季节循环。", [], ["Underworld order"])
+    ]),
+    overview("宙斯后代", "宙斯的不同配偶连接了智慧、光明、农业、诗歌、信使和美的多条支线。", [
+      cluster(["zeus", "metis"], "生出", ["athena"], "雅典娜的母系是智慧女神 Metis；她从宙斯头中出生。"),
+      cluster(["zeus", "leto"], "生出", ["apollo", "artemis"], "Leto 线连接预言、音乐、太阳/月亮化的光明传统和狩猎。"),
+      cluster(["zeus", "demeter"], "生出", ["persephone"], "Persephone 把农业母女关系与冥界王后身份连在一起。"),
+      cluster(["zeus", "mnemosyne"], "生出", ["calliope", "clio", "erato", "euterpe", "melpomene", "polyhymnia", "terpsichore", "thalia-muse", "urania"], "九缪斯是 Zeus 与 Memory 的孩子，说明艺术和知识必须依赖记忆。"),
+      cluster(["zeus", "maia"], "生出", ["hermes"], "Hermes 来自隐居的 Pleiad Maia，神谱上连接 Atlas 家族与奥林匹斯。"),
+      cluster(["zeus", "dione"], "生出", ["aphrodite"], "这是 Homeric 传统；Hesiod 传统则把 Aphrodite 说成由 Uranus 的海沫而生。")
+    ]),
+    overview("自然家族", "太阳、月亮、黎明、风、海神和水泽女神构成自然世界的谱系网络。", [
+      cluster(["hyperion", "theia"], "生出", ["helios", "selene", "eos"], "天体光明家族：太阳、月亮和黎明是同胞。"),
+      cluster(["eos", "astraeus"], "生出", ["boreas", "zephyrus", "notus", "eurus"], "黎明与星辰之神的结合生出四方风。"),
+      cluster(["oceanus", "tethys"], "生出", ["metis", "dione", "tyche", "peitho"], "Oceanid 谱系把水源、智慧、命运和说服连在一起。", [], ["Rivers", "Oceanids"]),
+      cluster(["pontus", "gaia"], "生出", ["nereus"], "Pontus 是海本身，Nereus 是较稳定、诚实的海老人支线。"),
+      cluster(["nereus"], "生出", ["amphitrite", "thetis", "galatea"], "Nereids 连接海后、阿喀琉斯母亲和海中爱情故事。", ["Doris"])
+    ]),
+    overview("人格化与艺术群", "命运、恐惧、胜利、缪斯和美惠常常不是单独神话，而是心理与社会秩序的家族化。", [
+      cluster(["nyx"], "生出", ["hypnos", "thanatos", "nemesis", "eris", "clotho", "lachesis", "atropos"], "夜的孩子多与睡眠、死亡、报应、纷争和命运相关。"),
+      cluster(["crius"], "后代支线", ["astraeus"], "Crius 经由 Astraeus 连到风神；另一支 Pallas 与 Styx 生出胜利和强制诸神。", [], ["Pallas", "Styx"]),
+      cluster([], "生出", ["nike", "kratos", "bia", "zelus"], "Nike、Kratos、Bia、Zelus 同属 Pallas 与 Styx 的孩子，最早支持 Zeus。", ["Pallas", "Styx"]),
+      cluster(["ares", "aphrodite"], "生出", ["deimos", "phobos", "harmonia", "anteros"], "战争与爱结合，生出恐惧、惊慌、和谐与回应之爱。"),
+      cluster(["zeus"], "生出", ["aglaea"], "Aglaea 属三美惠之一，母亲常列为 Eurynome；她后来与 Hephaestus 相连。", ["Eurynome"])
+    ])
   ];
 })();
