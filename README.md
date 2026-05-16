@@ -2,6 +2,10 @@
 
 一个本地静态网站，用中文介绍希腊神话中 100 位英语世界常见的神祇与神性人物。
 
+## 在线访问
+
+https://szkailorik.github.io/greek-mythology-100-atlas/
+
 ## 功能
 
 - 100 位希腊神祇与神性人物图鉴
