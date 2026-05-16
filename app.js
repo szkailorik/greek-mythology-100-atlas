@@ -856,6 +856,7 @@ function renderLineageBox(item) {
         <h3>谱系关系</h3>
         <span>主流谱系 + 异说提示</span>
       </div>
+      ${renderAncestryPath(item)}
       ${renderLineageMap(item, lineage)}
       <div class="relation-grid">
         ${rows}
@@ -864,6 +865,92 @@ function renderLineageBox(item) {
       ${sources ? `<div class="source-links">${sources}</div>` : ""}
     </section>
   `;
+}
+
+function renderAncestryPath(item) {
+  const levels = buildAncestryLevels(item);
+  const hasAncestors = levels.some((level) => level.distance > 0);
+  return `
+    <div class="ancestry-path" aria-label="${escapeHtml(item.name)} 的谱系路径">
+      <div class="ancestry-path-head">
+        <strong>谱系路径</strong>
+        <span>${hasAncestors ? "从远祖到当前神" : "作为谱系起点呈现"}</span>
+      </div>
+      <div class="ancestry-levels">
+        ${levels.map(renderAncestryLevel).join("")}
+      </div>
+      ${hasAncestors ? "" : `<p class="ancestry-note">古代材料中没有稳定的父母线索，本站把它作为这一支谱系的起点。</p>`}
+    </div>
+  `;
+}
+
+function buildAncestryLevels(item) {
+  const levels = [{ distance: 0, ids: [item.id], names: [] }];
+  const visited = new Set([item.id]);
+  let frontier = [item.id];
+
+  for (let distance = 1; distance <= 4; distance += 1) {
+    const ids = [];
+    const names = [];
+    frontier.forEach((id) => {
+      const lineage = getLineage({ id });
+      (lineage.parents || []).forEach((parentId) => {
+        if (!visited.has(parentId)) {
+          visited.add(parentId);
+          ids.push(parentId);
+        }
+      });
+      (lineage.parentNames || []).map(compactLineageName)
+        .filter(Boolean)
+        .forEach((name) => {
+          if (!names.includes(name)) names.push(name);
+        });
+    });
+
+    if (!ids.length && !names.length) break;
+    levels.push({ distance, ids, names });
+    if (!ids.length) break;
+    frontier = ids;
+  }
+
+  return levels.reverse();
+}
+
+function compactLineageName(name) {
+  const normalized = String(name || "").trim();
+  if (!normalized || normalized.length > 32) return "";
+  if (/(appears|genealogy|varies|tradition|sea-foam|mortal|apotheosis|follow|source|cosmogony)/iu.test(normalized)) return "";
+  return normalized;
+}
+
+function renderAncestryLevel(level, index, levels) {
+  const label = ancestryLevelLabel(level.distance);
+  const isLast = index === levels.length - 1;
+  return `
+    <div class="ancestry-level">
+      <span class="ancestry-label">${escapeHtml(label)}</span>
+      <div class="ancestry-nodes">
+        ${level.ids.map((id) => renderAncestryNode(id, level.distance === 0)).join("")}
+        ${level.names.map((name) => `<span class="ancestry-node external">${escapeHtml(name)}</span>`).join("")}
+      </div>
+      ${isLast ? "" : `<span class="ancestry-arrow" aria-hidden="true">↓</span>`}
+    </div>
+  `;
+}
+
+function ancestryLevelLabel(distance) {
+  if (distance === 0) return "当前";
+  if (distance === 1) return "父母";
+  if (distance === 2) return "祖辈";
+  if (distance === 3) return "曾祖辈";
+  return "更早";
+}
+
+function renderAncestryNode(id, current = false) {
+  const item = deities.find((entry) => entry.id === id);
+  if (!item) return `<span class="ancestry-node external">${escapeHtml(id)}</span>`;
+  if (current) return `<span class="ancestry-node self">${escapeHtml(item.name)}<span>${escapeHtml(item.cn)}</span></span>`;
+  return `<button class="ancestry-node" type="button" data-detail="${escapeHtml(item.id)}">${escapeHtml(item.name)}<span>${escapeHtml(item.cn)}</span></button>`;
 }
 
 function renderLineageMap(item, lineage) {

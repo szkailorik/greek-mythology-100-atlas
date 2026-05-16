@@ -850,6 +850,116 @@ h1 {
   gap: 10px;
 }
 
+.ancestry-path {
+  display: grid;
+  gap: 8px;
+  border: 1px solid rgba(25, 95, 115, 0.16);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(255, 253, 248, 0.66);
+}
+
+.ancestry-path-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.ancestry-path-head strong {
+  color: var(--sea);
+  font-size: 0.88rem;
+}
+
+.ancestry-path-head span {
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.ancestry-levels {
+  display: grid;
+  gap: 6px;
+}
+
+.ancestry-level {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) 16px;
+  gap: 8px;
+  align-items: center;
+}
+
+.ancestry-label {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.ancestry-nodes {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ancestry-node {
+  min-height: 28px;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid rgba(25, 95, 115, 0.22);
+  border-radius: 8px;
+  padding: 4px 8px;
+  color: var(--ink);
+  background: #fff;
+  font-size: 0.8rem;
+  font-weight: 850;
+}
+
+.ancestry-node span {
+  color: var(--muted);
+  font-weight: 750;
+}
+
+.ancestry-node.self {
+  border-color: rgba(127, 48, 67, 0.34);
+  color: #fff;
+  background: var(--wine);
+}
+
+.ancestry-node.self span {
+  color: rgba(255, 255, 255, 0.78);
+}
+
+.ancestry-node.external {
+  border-color: rgba(31, 36, 48, 0.1);
+  color: #4c4a44;
+  background: rgba(255, 253, 248, 0.72);
+  font-weight: 750;
+}
+
+button.ancestry-node {
+  cursor: pointer;
+}
+
+button.ancestry-node:hover,
+button.ancestry-node:focus-visible {
+  border-color: rgba(25, 95, 115, 0.46);
+  background: rgba(25, 95, 115, 0.08);
+}
+
+.ancestry-note {
+  margin: 0;
+  color: var(--muted);
+  font-size: 0.8rem;
+  line-height: 1.45;
+}
+
+.ancestry-arrow {
+  color: rgba(25, 95, 115, 0.52);
+  font-weight: 900;
+  text-align: center;
+}
+
 .lineage-map {
   display: grid;
   gap: 6px;
@@ -1129,12 +1239,17 @@ h1 {
   }
 
   .lineage-board-grid,
-  .lineage-cluster {
+  .lineage-cluster,
+  .ancestry-level {
     grid-template-columns: 1fr;
   }
 
   .cluster-relation {
     width: fit-content;
+  }
+
+  .ancestry-arrow {
+    display: none;
   }
 
   .relation-row {
