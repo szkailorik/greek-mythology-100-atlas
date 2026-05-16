@@ -801,6 +801,7 @@ function renderLineageBox(item) {
         <h3>谱系关系</h3>
         <span>主流谱系 + 异说提示</span>
       </div>
+      ${renderLineageMap(item, lineage)}
       <div class="relation-grid">
         ${rows}
       </div>
@@ -808,6 +809,58 @@ function renderLineageBox(item) {
       ${sources ? `<div class="source-links">${sources}</div>` : ""}
     </section>
   `;
+}
+
+function renderLineageMap(item, lineage) {
+  const parentNodes = renderMapNodes(lineage.parents, lineage.parentNames, "谱系上游");
+  const childNodes = renderMapNodes(lineage.children, lineage.childNames, "谱系下游");
+  const consortNodes = renderMapNodes(lineage.consorts, lineage.consortNames, "配偶 / 伴侣");
+  const siblingNodes = renderMapNodes(lineage.siblings, lineage.siblingNames, "同辈");
+
+  return `
+    <div class="lineage-map" aria-label="${escapeHtml(item.name)} 的简明谱系图">
+      <div class="lineage-map-row">
+        <span class="map-label">父母</span>
+        <div class="map-nodes">${parentNodes}</div>
+      </div>
+      <div class="map-connector" aria-hidden="true"></div>
+      <div class="lineage-map-row current">
+        <span class="map-label">当前</span>
+        <div class="map-nodes">${renderCurrentMapNode(item)}</div>
+      </div>
+      <div class="map-connector" aria-hidden="true"></div>
+      <div class="lineage-map-row">
+        <span class="map-label">子女</span>
+        <div class="map-nodes">${childNodes}</div>
+      </div>
+      <div class="lineage-map-side">
+        <div>
+          <span class="map-label">配偶</span>
+          <div class="map-nodes">${consortNodes}</div>
+        </div>
+        <div>
+          <span class="map-label">同辈</span>
+          <div class="map-nodes">${siblingNodes}</div>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMapNodes(ids = [], names = [], emptyText) {
+  const nodes = [
+    ...ids.map((id) => {
+      const item = deities.find((entry) => entry.id === id);
+      if (!item) return `<span class="map-node external">${escapeHtml(id)}</span>`;
+      return `<button class="map-node" type="button" data-detail="${escapeHtml(item.id)}">${escapeHtml(item.name)}<span>${escapeHtml(item.cn)}</span></button>`;
+    }),
+    ...names.map((name) => `<span class="map-node external">${escapeHtml(name)}</span>`)
+  ];
+  return nodes.length ? nodes.join("") : `<span class="map-node muted">${escapeHtml(emptyText)}</span>`;
+}
+
+function renderCurrentMapNode(item) {
+  return `<span class="map-node self">${escapeHtml(item.name)}<span>${escapeHtml(item.cn)}</span></span>`;
 }
 
 function renderRelationRow(labelZh, labelEn, ids = [], names = []) {
