@@ -805,6 +805,18 @@ h1 {
   color: var(--sea);
 }
 
+.generated-box-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
+.generated-box-head span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
 .artwork-box h3 {
   color: var(--gold);
 }
@@ -824,6 +836,30 @@ h1 {
   color: #3f3b35;
   font-size: 0.93rem;
   line-height: 1.55;
+}
+
+.image-guide {
+  display: grid;
+  gap: 7px;
+  border-top: 1px solid rgba(25, 95, 115, 0.14);
+  padding-top: 8px;
+}
+
+.image-guide-row {
+  display: grid;
+  grid-template-columns: 72px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.image-guide-row strong {
+  color: var(--sea);
+  font-size: 0.78rem;
+  line-height: 1.5;
+}
+
+.image-guide-row p {
+  margin: 0;
 }
 
 .story-title {
@@ -1250,6 +1286,11 @@ button.ancestry-node:focus-visible {
 
   .ancestry-arrow {
     display: none;
+  }
+
+  .image-guide-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
   }
 
   .relation-row {

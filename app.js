@@ -137,6 +137,75 @@ const groupThemes = {
   "缪斯与美惠": { bg1: "#f7f0e8", bg2: "#d9d5be", accent: "#6b6f3b", robe: "#fff5e6", metal: "#b8913e" }
 };
 
+const groupVisualNotes = {
+  "奥林匹斯核心": "背景采用神殿式垂直结构和明亮天光，强调奥林匹斯神的公共权威与秩序感。",
+  "冥界与家宅": "背景压低明度，加入地下或炉火式空间感，把死亡、家宅和边界秩序放在同一视觉语境里。",
+  "著名小神": "背景更轻、更开放，让信使、医神、爱情、胜利等功能性神格显得容易辨认。",
+  "泰坦神族": "背景偏古铜和大地色，强调比奥林匹斯更古老、更宏大的上一代神力。",
+  "海洋与风": "背景使用浪线、流动云气和蓝绿色调，提示海域、风向、航海与自然力量。",
+  "原初神": "背景加入裂隙、星点和宇宙环，表现这些神更像宇宙状态本身，而不只是普通人物。",
+  "命运与人格化": "背景用线、弧和克制色块表现抽象力量，帮助把命运、恐惧、和谐、竞争等概念人格化。",
+  "缪斯与美惠": "背景更柔和，加入光晕、曲线和舞台感，突出艺术、记忆、诗歌、优雅与表达。"
+};
+
+const propVisualNotes = {
+  lightning: ["霹雳", "霹雳直接指向天空主权和惩戒力量，是宙斯式王权最稳定的视觉标识。"],
+  peacock: ["孔雀", "孔雀来自赫拉的传统标志，华丽尾羽对应神后、婚姻与尊严。"],
+  trident: ["三叉戟", "三叉戟让观众立刻联想到海浪、地震和波塞冬式的海权。"],
+  wheat: ["麦穗", "麦穗把丰收、谷物和季节循环集中在一个清楚的农业符号里。"],
+  owlShield: ["猫头鹰与盾", "猫头鹰代表智慧，盾牌代表战略防护，二者合在一起就是雅典娜最典型的形象。"],
+  sunLyre: ["太阳与里拉琴", "太阳光和里拉琴把光明、音乐、预言与秩序连接起来。"],
+  moonBow: ["新月与弓", "新月提示夜空和月性，弓箭提示狩猎、边界和迅疾行动。"],
+  spearShield: ["长矛与盾", "武器和盾牌把战场冲突、勇武和直接力量放到画面中心。"],
+  shellRose: ["贝壳与玫瑰", "贝壳回应海沫诞生传统，玫瑰则提示美、爱欲和吸引力。"],
+  hammerAnvil: ["锤与铁砧", "锤子和铁砧把火、金属、劳动和工匠技艺直接可视化。"],
+  caduceus: ["双蛇杖", "双蛇杖和翼形元素提示信使速度、谈判、旅行与跨界能力。"],
+  grapesCup: ["葡萄与酒杯", "葡萄和酒杯把酒神的丰盛、狂欢、戏剧性和失控感集中起来。"],
+  bident: ["双叉杖", "双叉杖比三叉戟更阴沉，适合表现冥界统治和地下财富。"],
+  hearth: ["炉火", "炉火是家宅与城邦中心，画面用它表达安定、祭祀和持续燃烧的秩序。"],
+  pomegranate: ["石榴", "石榴对应珀耳塞福涅吃下冥界食物的故事，是春天与冥后身份的关键物。"],
+  sunChariot: ["太阳车", "太阳车表现每日穿越天空的轨迹，让太阳神的职责变成可见运动。"],
+  moon: ["月轮", "月轮和银色光晕把夜空、周期和静默爱情放进画面。"],
+  dawn: ["黎明光", "玫瑰色晨光提示每天开启白昼的瞬间，也对应 Eos 的黎明传统。"],
+  twinTorches: ["双火炬", "火炬照亮夜晚与岔路，适合表现寻找、魔法和边界守护。"],
+  pipes: ["排箫", "排箫是潘神最直观的标志，把山林、牧野和野性音乐连在一起。"],
+  serpentStaff: ["蛇杖", "蛇绕杖表现医学、疗愈、更新和神庙治疗传统。"],
+  poppy: ["罂粟", "罂粟柔化画面，提示睡眠、梦境和意识下沉。"],
+  downTorch: ["倒置火炬", "倒置火炬是生命火焰熄灭的象征，适合表达安静的死亡。"],
+  scales: ["天平", "天平把报应、尺度和命运分配变成清楚的判断符号。"],
+  cornucopia: ["丰饶角", "丰饶角表现幸运、城市命运和突然降临的富足。"],
+  scalesSword: ["天平与剑", "天平表现秩序与衡量，剑表现裁断，合起来就是神圣法度。"],
+  lionDrum: ["狮子与鼓", "狮子和鼓突出母神、护佑与古老仪式力量。"],
+  sickle: ["镰刀", "镰刀指向克洛诺斯推翻乌拉诺斯的故事，也暗示时间的切割。"],
+  waveHorn: ["水流与牛角", "水流和角状元素表现环世大河、古老水源和边界感。"],
+  globe: ["天球", "天球把承担天空、星辰秩序或宇宙结构的神职视觉化。"],
+  fireChain: ["火与锁链", "火代表文明赠礼，锁链提示违抗神权后的惩罚。"],
+  earthFruit: ["大地与果实", "果实、土地和绿色元素让盖亚式的生养力量变得直观。"],
+  starScythe: ["星空与镰形", "星空表现天穹，镰形暗示乌拉诺斯相关的创世暴力。"],
+  nightStars: ["夜幕与星群", "星群和暗色背景把夜本身塑造成有生命的原初力量。"],
+  void: ["初始裂隙", "裂隙和雾状空间表现 Chaos 作为最初空隙，而不是现代意义的混乱。"],
+  cosmicEgg: ["宇宙蛋", "宇宙蛋是奥尔弗斯神谱里万物显形的核心母题。"],
+  spindle: ["纺锤", "纺锤表现生命之线的开始，是 Clotho 最清楚的职责符号。"],
+  measureThread: ["量线", "量线对应寿命分配，表现 Lachesis 丈量命运长度。"],
+  shears: ["剪刀", "剪刀代表剪断生命线，让 Atropos 的不可逆职责一眼可见。"],
+  apple: ["金苹果", "金苹果提示不和女神引发三女神竞争和特洛伊战争的故事。"],
+  necklace: ["项链", "项链对应 Harmonia 的婚礼与诅咒，既美丽又带有命运代价。"],
+  globeCompass: ["天球与圆规", "天球和圆规把天文学、测量和宇宙秩序结合起来。"],
+  bow: ["弓", "弓箭表现远距行动、狩猎或带来影响的迅速力量。"],
+  lyre: ["里拉琴", "里拉琴提示音乐、诗歌、和谐与神圣表达。"],
+  torch: ["火炬", "火炬提示引导、仪式、夜行和寻找。"],
+  scroll: ["卷轴", "卷轴把历史、诗歌、法律或记忆变成可保存的知识。"],
+  stars: ["星群", "星群提示天象、夜空、预言或更高层的宇宙秩序。"],
+  wave: ["海浪", "海浪直接指向海洋、航海、水域祖先或流动自然力。"],
+  wind: ["风带", "风带和流线表现方向、速度和不可抓住的气流。"],
+  flowers: ["花与花冠", "花朵表现青春、魅力、春季成长或艺术性的柔美。"],
+  mask: ["面具", "面具提示戏剧、恐惧或人格化情绪的外显。"],
+  chains: ["锁链", "锁链表现强制、惩罚、束缚或权力执行。"],
+  flame: ["火焰", "火焰提示炉火、锻造、文明、祭祀或神力显现。"],
+  cup: ["杯", "杯象征酒、青春侍奉、宴饮或神圣饮品。"],
+  laurel: ["月桂", "月桂代表荣耀、诗歌、胜利和古典神圣气质。"]
+};
+
 const feminineIds = new Set([
   "hera", "demeter", "athena", "artemis", "aphrodite", "hestia", "persephone", "nike", "hebe",
   "iris", "selene", "eos", "hecate", "hygieia", "nemesis", "tyche", "themis", "leto", "rhea",
@@ -839,6 +908,52 @@ function renderStoryBox(item) {
   `;
 }
 
+function renderGeneratedBox(item, profile) {
+  const guide = generatedImageGuide(item, profile);
+  return `
+    <section class="generated-box">
+      <div class="generated-box-head">
+        <h3>生成全身形象解读</h3>
+        <span>看图线索</span>
+      </div>
+      <p>${escapeHtml(profile.description)}</p>
+      <div class="image-guide">
+        ${guide.map(({ label, text }) => `
+          <div class="image-guide-row">
+            <strong>${escapeHtml(label)}</strong>
+            <p>${escapeHtml(text)}</p>
+          </div>
+        `).join("")}
+      </div>
+    </section>
+  `;
+}
+
+function generatedImageGuide(item, profile) {
+  const [propLabel, propMeaning] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
+  const domainText = item.domains.slice(0, 3).join("、");
+  const symbolText = item.symbols.slice(0, 3).join("、");
+  const groupNote = groupVisualNotes[item.group] || groupVisualNotes["著名小神"];
+  return [
+    {
+      label: "构图",
+      text: `采用全身站姿，是为了同时看清${item.cn}的神格气质、服饰轮廓和手中符号；画面优先服务于${domainText}这几个核心神职。`
+    },
+    {
+      label: "主符号",
+      text: `${propLabel}是这张图的第一识别点。${propMeaning}`
+    },
+    {
+      label: "元素",
+      text: `画面中的${symbolText}来自这位神最常见的传统象征，用来帮助观众把人物和神话职责快速对应起来。`
+    },
+    {
+      label: "背景",
+      text: groupNote
+    }
+  ];
+}
+
 function renderLineageBox(item) {
   const lineage = getLineage(item);
   const rows = [
@@ -1050,10 +1165,7 @@ function openDetail(id) {
       </div>
       ${tagList(item.domains, "domain-list")}
       ${tagList(item.symbols, "symbol-list")}
-      <section class="generated-box">
-        <h3>生成全身形象</h3>
-        <p>${escapeHtml(profile.description)}</p>
-      </section>
+      ${renderGeneratedBox(item, profile)}
       <p class="summary">${escapeHtml(item.summary)}</p>
       ${renderStoryBox(item)}
       ${renderLineageBox(item)}
