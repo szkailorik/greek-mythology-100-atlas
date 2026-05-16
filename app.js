@@ -111,7 +111,11 @@ const state = {
 };
 
 let imageObserver = null;
-const rasterPortraitIds = new Set(["zeus", "hera", "poseidon", "demeter", "athena", "apollo", "artemis", "ares", "aphrodite", "hephaestus", "hermes", "dionysus", "hades", "hestia", "persephone"]);
+const rasterPortraitIds = new Set([
+  "zeus", "hera", "poseidon", "demeter", "athena", "apollo", "artemis", "ares", "aphrodite",
+  "hephaestus", "hermes", "dionysus", "hades", "hestia", "persephone", "eros", "nike",
+  "hebe", "iris", "helios", "selene", "eos", "hecate", "pan", "asclepius"
+]);
 
 const groupThemes = {
   "奥林匹斯核心": { bg1: "#f8efe2", bg2: "#cad9df", accent: "#8a3147", robe: "#f7f0df", metal: "#b9822d" },
