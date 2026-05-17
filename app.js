@@ -225,6 +225,7 @@ const els = {
   totalCount: document.querySelector("#totalCount"),
   visibleCount: document.querySelector("#visibleCount"),
   searchInput: document.querySelector("#searchInput"),
+  searchSuggestions: document.querySelector("#searchSuggestions"),
   sortSelect: document.querySelector("#sortSelect"),
   voiceSelect: document.querySelector("#voiceSelect"),
   stopSpeech: document.querySelector("#stopSpeech"),
@@ -1009,6 +1010,30 @@ function renderGeneratedBox(item, profile) {
   `;
 }
 
+function renderPronunciationBox(item) {
+  return `
+    <section class="pronunciation-box">
+      <div class="pronunciation-box-head">
+        <h3>发音练习</h3>
+        <span>点击听读</span>
+      </div>
+      <div class="pronunciation-actions">
+        <button class="pronunciation-action" type="button" data-speak="${escapeHtml(item.id)}" data-speak-lang="en" title="朗读英文名 ${escapeHtml(item.name)}">
+          <span>英文名</span>
+          <strong>${escapeHtml(item.name)}</strong>
+          <em>${escapeHtml(item.pronunciation)}</em>
+        </button>
+        <button class="pronunciation-action" type="button" data-speak="${escapeHtml(item.id)}" data-speak-lang="el" title="朗读希腊文名 ${escapeHtml(item.greek)}">
+          <span>希腊文名</span>
+          <strong>${escapeHtml(item.greek)}</strong>
+          <em>${escapeHtml(transliterateGreek(item.greek))}</em>
+        </button>
+      </div>
+      <p>英文按英语世界常见读法朗读；希腊文会优先使用系统希腊语音，没有希腊语音时会提示为近似读法。</p>
+    </section>
+  `;
+}
+
 function renderImageLegend(item, profile) {
   const [propLabel] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
   const legendItems = [
@@ -1329,6 +1354,7 @@ function openDetail(id) {
         <span>${escapeHtml(item.cn)} · <button class="inline-greek-name" type="button" data-speak="${escapeHtml(item.id)}" data-speak-lang="el" title="朗读希腊文名 ${escapeHtml(item.greek)}">${escapeHtml(item.greek)}</button></span>
         <span>英文常见读音：${escapeHtml(item.pronunciation)} · 希腊文名可点击朗读</span>
       </div>
+      ${renderPronunciationBox(item)}
       ${tagList(item.domains, "domain-list")}
       ${tagList(item.symbols, "symbol-list")}
       ${renderGeneratedBox(item, profile)}
@@ -1487,6 +1513,19 @@ function bindEvents() {
 
   els.stopSpeech.addEventListener("click", () => {
     if ("speechSynthesis" in window) speechSynthesis.cancel();
+  });
+
+  els.searchSuggestions.addEventListener("click", (event) => {
+    const suggestionButton = event.target.closest("[data-search-suggestion]");
+    const clearButton = event.target.closest("[data-search-clear]");
+    if (!suggestionButton && !clearButton) return;
+
+    state.query = suggestionButton ? suggestionButton.dataset.searchSuggestion : "";
+    state.group = "全部";
+    els.searchInput.value = state.query;
+    renderFilters();
+    renderCatalog();
+    els.searchInput.focus();
   });
 
   els.filters.addEventListener("click", (event) => {

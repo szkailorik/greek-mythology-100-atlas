@@ -65,6 +65,7 @@ a {
 
 .header-main,
 .controls,
+.search-suggestions,
 .lineage-overview,
 .lineage-board,
 .filters,
@@ -129,6 +130,31 @@ h1 {
   padding-bottom: 14px;
 }
 
+.search-suggestions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 7px;
+  padding: 0 0 14px;
+}
+
+.search-suggestions span {
+  color: var(--muted);
+  font-size: 0.8rem;
+  font-weight: 900;
+}
+
+.search-suggestions button {
+  min-height: 32px;
+  border: 1px solid rgba(25, 95, 115, 0.16);
+  border-radius: 8px;
+  padding: 5px 9px;
+  color: var(--ink);
+  background: rgba(255, 253, 248, 0.78);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
 .control {
   min-width: 0;
   display: grid;
@@ -175,9 +201,11 @@ h1 {
 .greek-name:hover,
 .inline-greek-name:hover,
 .filter-button:hover,
+.search-suggestions button:hover,
 .lineage-lane button:hover,
 .overview-node:hover,
-.relation-chip:hover {
+.relation-chip:hover,
+.pronunciation-action:hover {
   border-color: rgba(25, 95, 115, 0.45);
   color: var(--sea);
 }
@@ -828,6 +856,7 @@ h1 {
 }
 
 .generated-box,
+.pronunciation-box,
 .story-box,
 .lineage-box,
 .artwork-box {
@@ -840,6 +869,11 @@ h1 {
 .generated-box {
   border: 1px solid rgba(25, 95, 115, 0.22);
   background: rgba(25, 95, 115, 0.08);
+}
+
+.pronunciation-box {
+  border: 1px solid rgba(75, 111, 159, 0.22);
+  background: rgba(75, 111, 159, 0.08);
 }
 
 .artwork-box {
@@ -859,6 +893,8 @@ h1 {
 
 .generated-box h3,
 .generated-box p,
+.pronunciation-box h3,
+.pronunciation-box p,
 .story-box h3,
 .story-box p,
 .lineage-box h3,
@@ -869,6 +905,7 @@ h1 {
 }
 
 .generated-box h3,
+.pronunciation-box h3,
 .story-box h3,
 .lineage-box h3,
 .artwork-box h3 {
@@ -877,6 +914,10 @@ h1 {
 
 .generated-box h3 {
   color: var(--sea);
+}
+
+.pronunciation-box h3 {
+  color: var(--sky);
 }
 
 .generated-box-head {
@@ -893,7 +934,19 @@ h1 {
   gap: 10px;
 }
 
+.pronunciation-box-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 10px;
+}
+
 .generated-box-head span {
+  color: var(--muted);
+  font-size: 0.82rem;
+}
+
+.pronunciation-box-head span {
   color: var(--muted);
   font-size: 0.82rem;
 }
@@ -916,12 +969,53 @@ h1 {
 }
 
 .generated-box p,
+.pronunciation-box p,
 .story-box p,
 .lineage-box p,
 .artwork-box p {
   color: #3f3b35;
   font-size: 0.93rem;
   line-height: 1.55;
+}
+
+.pronunciation-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.pronunciation-action {
+  min-width: 0;
+  min-height: 78px;
+  display: grid;
+  align-content: center;
+  gap: 3px;
+  border: 1px solid rgba(75, 111, 159, 0.2);
+  border-radius: 8px;
+  padding: 9px 10px;
+  color: var(--ink);
+  background: rgba(255, 253, 248, 0.86);
+  text-align: left;
+}
+
+.pronunciation-action span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.pronunciation-action strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-family: Georgia, "Times New Roman", "Noto Serif", serif;
+  font-size: 1.08rem;
+}
+
+.pronunciation-action em {
+  color: var(--sky);
+  font-size: 0.8rem;
+  font-style: normal;
+  font-weight: 900;
 }
 
 .image-guide {
@@ -1368,6 +1462,7 @@ button.ancestry-node:focus-visible {
 @media (max-width: 560px) {
   .header-main,
   .controls,
+  .search-suggestions,
   .lineage-overview,
   .lineage-board,
   .filters,
@@ -1405,6 +1500,10 @@ button.ancestry-node:focus-visible {
   .image-guide-row {
     grid-template-columns: 1fr;
     gap: 2px;
+  }
+
+  .pronunciation-actions {
+    grid-template-columns: 1fr;
   }
 
   .artwork-compare-row {
