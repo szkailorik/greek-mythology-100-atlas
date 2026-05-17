@@ -115,10 +115,13 @@ const state = {
   quizChoiceId: "",
   quizAnswered: false,
   quizCorrect: 0,
-  quizTotal: 0
+  quizTotal: 0,
+  quizMisses: {},
+  quizReviewMode: false
 };
 
 let imageObserver = null;
+const quizStorageKey = "greek-mythology-quiz-progress-v1";
 const rasterPortraitIds = new Set([
   "zeus", "hera", "poseidon", "demeter", "athena", "apollo", "artemis", "ares", "aphrodite",
   "hephaestus", "hermes", "dionysus", "hades", "hestia", "persephone", "eros", "nike",
@@ -398,6 +401,7 @@ function renderMemoryTrainer() {
   const profile = visualProfile(item);
   const choices = currentQuizChoices(item);
   const [propLabel] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
+  const missIds = quizMissIds();
   const answer = state.quizRevealed || state.quizAnswered
     ? `
       <div class="memory-answer is-revealed">
@@ -423,6 +427,7 @@ function renderMemoryTrainer() {
       <div class="memory-score" aria-label="本轮答题统计">
         <strong>${state.quizCorrect}</strong>
         <span>答对 / ${state.quizTotal || 0} 题</span>
+        <em>${state.quizReviewMode ? `错题复习 ${missIds.length}` : `错题池 ${missIds.length}`}</em>
       </div>
     </div>
     <div class="memory-stage">
@@ -444,8 +449,11 @@ function renderMemoryTrainer() {
         <div class="memory-actions">
           <button class="memory-primary" type="button" data-quiz-reveal>${state.quizRevealed || state.quizAnswered ? "答案已显示" : "直接看答案"}</button>
           <button type="button" data-quiz-next>换一位</button>
+          ${missIds.length ? `<button type="button" data-quiz-review>${state.quizReviewMode ? "继续错题" : `复习错题 ${missIds.length}`}</button>` : ""}
+          ${state.quizReviewMode ? `<button type="button" data-quiz-all>回到全部</button>` : ""}
           <button type="button" data-speak="${escapeHtml(item.id)}" data-speak-lang="en">听英文名</button>
           <button type="button" data-detail="${escapeHtml(item.id)}">打开详情</button>
+          <button type="button" data-quiz-reset>重置记录</button>
         </div>
       </div>
     </div>
@@ -477,7 +485,7 @@ function renderQuizFeedback(item) {
   return `
     <div class="memory-feedback ${isCorrect ? "is-correct" : "is-wrong"}">
       <strong>${isCorrect ? "答对了" : "再看主符号"}</strong>
-      <p>${isCorrect ? "这个形象已经记住了一次。" : `你选的是 ${escapeHtml(picked?.cn || "另一个神")}，正确答案是 ${escapeHtml(item.cn)}。`}</p>
+      <p>${isCorrect ? "这个形象已经记住了一次。" : `你选的是 ${escapeHtml(picked?.cn || "另一个神")}，正确答案是 ${escapeHtml(item.cn)}。这道题已进入错题池。`}</p>
     </div>
   `;
 }
@@ -508,13 +516,24 @@ function currentQuizChoices(item) {
 }
 
 function buildQuizChoices(item) {
-  const pool = deities.filter((entry) => entry.id !== item.id);
   const distractors = [];
-  while (distractors.length < 3 && pool.length) {
-    const index = Math.floor(Math.random() * pool.length);
-    distractors.push(pool.splice(index, 1)[0].id);
-  }
+  const used = new Set([item.id]);
+  takeQuizDistractors(deities.filter((entry) => entry.group === item.group && entry.id !== item.id), distractors, used);
+  takeQuizDistractors(deities.filter((entry) => entry.id !== item.id && sharesDomain(entry, item)), distractors, used);
+  takeQuizDistractors(deities.filter((entry) => entry.id !== item.id), distractors, used);
   return shuffleQuizChoices([item.id, ...distractors]);
+}
+
+function takeQuizDistractors(pool, distractors, used) {
+  shuffleQuizChoices(pool.map((entry) => entry.id)).forEach((id) => {
+    if (distractors.length >= 3 || used.has(id)) return;
+    used.add(id);
+    distractors.push(id);
+  });
+}
+
+function sharesDomain(entry, item) {
+  return entry.domains.some((domain) => item.domains.includes(domain));
 }
 
 function shuffleQuizChoices(ids) {
@@ -523,15 +542,97 @@ function shuffleQuizChoices(ids) {
 
 function nextQuizItem() {
   const currentIndex = deities.findIndex((item) => item.id === state.quizId);
-  let nextIndex = Math.floor(Math.random() * deities.length);
-  if (deities.length > 1 && nextIndex === currentIndex) {
-    nextIndex = (nextIndex + 17) % deities.length;
+  const pool = quizPool();
+  let nextItem = pool[Math.floor(Math.random() * pool.length)] || deities[0];
+  if (pool.length > 1 && nextItem.id === state.quizId) {
+    nextItem = pool[(pool.findIndex((item) => item.id === state.quizId) + 1) % pool.length] || deities[(currentIndex + 17) % deities.length];
   }
-  state.quizId = deities[nextIndex].id;
+  state.quizId = nextItem.id;
   state.quizRevealed = false;
   state.quizChoiceId = "";
   state.quizAnswered = false;
-  state.quizChoices = buildQuizChoices(deities[nextIndex]);
+  state.quizChoices = buildQuizChoices(nextItem);
+}
+
+function quizPool() {
+  const misses = quizMissIds()
+    .map((id) => deities.find((item) => item.id === id))
+    .filter(Boolean);
+  if (state.quizReviewMode && misses.length) return misses;
+  if (state.quizReviewMode && !misses.length) state.quizReviewMode = false;
+  return deities;
+}
+
+function quizMissIds() {
+  return Object.entries(state.quizMisses || {})
+    .filter(([, count]) => Number(count) > 0)
+    .sort((a, b) => Number(b[1]) - Number(a[1]))
+    .map(([id]) => id)
+    .filter((id) => deities.some((item) => item.id === id));
+}
+
+function recordQuizAnswer(item, isCorrect) {
+  state.quizTotal += 1;
+  if (isCorrect) {
+    state.quizCorrect += 1;
+    reduceQuizMiss(item.id);
+  } else {
+    state.quizMisses[item.id] = (Number(state.quizMisses[item.id]) || 0) + 1;
+  }
+  if (state.quizReviewMode && !quizMissIds().length) state.quizReviewMode = false;
+  saveQuizProgress();
+}
+
+function reduceQuizMiss(id) {
+  const count = Number(state.quizMisses[id]) || 0;
+  if (count <= 1) {
+    delete state.quizMisses[id];
+  } else {
+    state.quizMisses[id] = count - 1;
+  }
+}
+
+function loadQuizProgress() {
+  try {
+    const stored = JSON.parse(localStorage.getItem(quizStorageKey) || "{}");
+    state.quizCorrect = Number(stored.correct) || 0;
+    state.quizTotal = Number(stored.total) || 0;
+    state.quizMisses = sanitizeQuizMisses(stored.misses);
+  } catch {
+    state.quizCorrect = 0;
+    state.quizTotal = 0;
+    state.quizMisses = {};
+  }
+}
+
+function saveQuizProgress() {
+  try {
+    localStorage.setItem(quizStorageKey, JSON.stringify({
+      correct: state.quizCorrect,
+      total: state.quizTotal,
+      misses: state.quizMisses
+    }));
+  } catch {
+    // Local storage can be unavailable in private browsing modes.
+  }
+}
+
+function sanitizeQuizMisses(misses) {
+  const clean = {};
+  if (!misses || typeof misses !== "object") return clean;
+  Object.entries(misses).forEach(([id, count]) => {
+    const numericCount = Number(count);
+    if (numericCount > 0 && deities.some((item) => item.id === id)) clean[id] = numericCount;
+  });
+  return clean;
+}
+
+function resetQuizProgress() {
+  state.quizCorrect = 0;
+  state.quizTotal = 0;
+  state.quizMisses = {};
+  state.quizReviewMode = false;
+  saveQuizProgress();
 }
 
 function renderLineageBoard() {
@@ -1722,8 +1823,7 @@ function bindEvents() {
       state.quizChoiceId = choiceButton.dataset.quizChoice;
       state.quizAnswered = true;
       state.quizRevealed = true;
-      state.quizTotal += 1;
-      if (state.quizChoiceId === item.id) state.quizCorrect += 1;
+      recordQuizAnswer(item, state.quizChoiceId === item.id);
       renderMemoryTrainer();
       return;
     }
@@ -1736,6 +1836,26 @@ function bindEvents() {
 
     if (event.target.closest("[data-quiz-next]")) {
       nextQuizItem();
+      renderMemoryTrainer();
+      return;
+    }
+
+    if (event.target.closest("[data-quiz-review]")) {
+      state.quizReviewMode = true;
+      nextQuizItem();
+      renderMemoryTrainer();
+      return;
+    }
+
+    if (event.target.closest("[data-quiz-all]")) {
+      state.quizReviewMode = false;
+      nextQuizItem();
+      renderMemoryTrainer();
+      return;
+    }
+
+    if (event.target.closest("[data-quiz-reset]")) {
+      resetQuizProgress();
       renderMemoryTrainer();
     }
   });
@@ -1793,6 +1913,7 @@ function bindEvents() {
 }
 
 function init() {
+  loadQuizProgress();
   renderMemoryTrainer();
   renderLineageBoard();
   renderFilters();

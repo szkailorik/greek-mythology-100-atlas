@@ -264,6 +264,13 @@ h1 {
   font-weight: 850;
 }
 
+.memory-score em {
+  color: var(--wine);
+  font-size: 0.78rem;
+  font-style: normal;
+  font-weight: 900;
+}
+
 .memory-stage {
   min-width: 0;
   display: grid;
