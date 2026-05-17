@@ -1365,6 +1365,12 @@ h1 {
   font-weight: 900;
 }
 
+.audio-intro-controls {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
 .audio-intro-tabs {
   width: fit-content;
   display: inline-flex;
@@ -1373,6 +1379,10 @@ h1 {
   border-radius: 8px;
   padding: 3px;
   background: rgba(255, 253, 248, 0.56);
+}
+
+.audio-intro-mode-tabs {
+  border-color: rgba(104, 118, 63, 0.2);
 }
 
 .audio-intro-tabs button {

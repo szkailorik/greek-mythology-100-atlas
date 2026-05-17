@@ -1337,24 +1337,32 @@ function renderPronunciationBox(item) {
 function renderAudioIntroBox(item, profile) {
   const intro = detailAudioIntro(item, profile);
   return `
-    <section class="audio-intro-box" data-audio-intro="${escapeHtml(item.id)}" data-active-intro-lang="zh">
+    <section class="audio-intro-box" data-audio-intro="${escapeHtml(item.id)}" data-active-intro-lang="zh" data-active-intro-mode="quick">
       <div class="audio-intro-head">
         <h3>语音简介</h3>
         <span data-intro-status>默认不自动播放</span>
       </div>
-      <div class="audio-intro-tabs" aria-label="${escapeHtml(item.name)} 语音简介语言">
-        <button type="button" data-intro-switch="zh" aria-pressed="true">中文</button>
-        <button type="button" data-intro-switch="en" aria-pressed="false">English</button>
+      <div class="audio-intro-controls">
+        <div class="audio-intro-tabs" aria-label="${escapeHtml(item.name)} 语音简介语言">
+          <button type="button" data-intro-switch="zh" aria-pressed="true">中文</button>
+          <button type="button" data-intro-switch="en" aria-pressed="false">English</button>
+        </div>
+        <div class="audio-intro-tabs audio-intro-mode-tabs" aria-label="${escapeHtml(item.name)} 语音简介长度">
+          <button type="button" data-intro-mode="quick" aria-pressed="true">快速版</button>
+          <button type="button" data-intro-mode="story" aria-pressed="false">故事版</button>
+        </div>
       </div>
       <div class="audio-intro-copy">
-        <p data-intro-text="zh" lang="zh-CN">${escapeHtml(intro.zh)}</p>
-        <p data-intro-text="en" lang="en" hidden>${escapeHtml(intro.en)}</p>
+        <p data-intro-lang="zh" data-intro-mode-text="quick" lang="zh-CN">${escapeHtml(intro.zhQuick)}</p>
+        <p data-intro-lang="zh" data-intro-mode-text="story" lang="zh-CN" hidden>${escapeHtml(intro.zhStory)}</p>
+        <p data-intro-lang="en" data-intro-mode-text="quick" lang="en" hidden>${escapeHtml(intro.enQuick)}</p>
+        <p data-intro-lang="en" data-intro-mode-text="story" lang="en" hidden>${escapeHtml(intro.enStory)}</p>
       </div>
       <div class="audio-intro-actions">
-        <button class="audio-intro-play" type="button" data-intro-play>播放当前介绍</button>
+        <button class="audio-intro-play" type="button" data-intro-play>播放快速版</button>
         <button type="button" data-intro-stop>停止</button>
       </div>
-      <p class="audio-intro-note">适合孩子边看图边听故事；语音只会在点击后开始。</p>
+      <p class="audio-intro-note">快速版适合先认识神祇；故事版会补充谱系和代表故事。语音只会在点击后开始。</p>
     </section>
   `;
 }
@@ -1369,7 +1377,14 @@ function detailAudioIntro(item, profile) {
     .slice(0, 2);
   const zhLineage = parentNames.length ? `常见谱系会把${item.cn}放在${parentNames.join("和")}这一支里，方便把人物关系连起来。` : "";
   const enGroup = termEnglish(item.group);
-  const zh = [
+  const zhStoryFirst = firstSentence(story.zh);
+  const enStoryFirst = firstSentence(story.en);
+  const zhQuick = [
+    `${item.cn}，英文名 ${item.name}，主要和${item.domains.slice(0, 3).join("、")}有关。`,
+    `看图先认${propLabel}，再记住${item.symbols.slice(0, 2).join("、")}。`,
+    `代表故事《${story.titleZh}》可以这样先记：${zhStoryFirst}`
+  ].filter(Boolean).join("");
+  const zhStory = [
     `${item.cn}，英文名 ${item.name}，是希腊神话中和${item.domains.slice(0, 3).join("、")}有关的神祇。`,
     item.summary,
     `看这张生成形象时，可以先认${propLabel}，再看${item.symbols.slice(0, 3).join("、")}，这些都是帮助记住${item.cn}的关键线索。`,
@@ -1378,12 +1393,22 @@ function detailAudioIntro(item, profile) {
   ].filter(Boolean).join("");
   const enDomains = englishTerms(item.domains, 3).join(", ");
   const enSymbols = englishTerms(item.symbols, 3).join(", ");
-  const en = [
+  const enQuick = [
+    `${item.name} is connected with ${enDomains || "a distinctive divine role"}.`,
+    `Look for ${enSymbols || "the main visual symbols"} in the portrait.`,
+    `Remember ${story.titleEn} this way: ${enStoryFirst}`
+  ].join(" ");
+  const enStory = [
     `${item.name} belongs to ${enGroup} and is connected with ${enDomains || "a distinctive divine role"}.`,
     `In the portrait, look first for ${enSymbols || "the main visual symbols"}; those clues help you remember who this deity is.`,
     `${story.titleEn}: ${story.en}`
   ].join(" ");
-  return { zh, en };
+  return { zhQuick, zhStory, enQuick, enStory };
+}
+
+function firstSentence(text) {
+  const sentence = text.match(/^.+?[。！？.!?]/u)?.[0] || text;
+  return sentence.trim();
 }
 
 function englishTerms(terms, limit) {
@@ -1919,7 +1944,7 @@ function resetIntroPlayback(box, statusText = "默认不自动播放") {
   if (status) status.textContent = statusText;
   const playButton = box.querySelector("[data-intro-play]");
   if (playButton) {
-    playButton.textContent = "播放当前介绍";
+    playButton.textContent = introPlayLabel(box);
     playButton.removeAttribute("aria-busy");
   }
 }
@@ -1931,14 +1956,45 @@ function resetAllIntroPlayback(statusText = "默认不自动播放") {
 function setIntroLanguage(box, lang) {
   if ("speechSynthesis" in window) speechSynthesis.cancel();
   activeIntroToken += 1;
-  resetIntroPlayback(box, lang === "zh" ? "已切换到中文" : "Switched to English");
   box.dataset.activeIntroLang = lang;
+  updateIntroSelection(box);
+  resetIntroPlayback(box, lang === "zh" ? "已切换到中文" : "Switched to English");
+}
+
+function setIntroMode(box, mode) {
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  activeIntroToken += 1;
+  box.dataset.activeIntroMode = mode;
+  updateIntroSelection(box);
+  const lang = box.dataset.activeIntroLang || "zh";
+  const label = introModeName(mode, lang);
+  resetIntroPlayback(box, lang === "zh" ? `已切换到${label}` : `Switched to ${label}`);
+}
+
+function updateIntroSelection(box) {
+  const lang = box.dataset.activeIntroLang || "zh";
+  const mode = box.dataset.activeIntroMode || "quick";
   box.querySelectorAll("[data-intro-switch]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.introSwitch === lang));
   });
-  box.querySelectorAll("[data-intro-text]").forEach((copy) => {
-    copy.hidden = copy.dataset.introText !== lang;
+  box.querySelectorAll("[data-intro-mode]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.introMode === mode));
   });
+  box.querySelectorAll("[data-intro-lang][data-intro-mode-text]").forEach((copy) => {
+    copy.hidden = copy.dataset.introLang !== lang || copy.dataset.introModeText !== mode;
+  });
+}
+
+function introModeName(mode, lang) {
+  if (lang === "zh") return mode === "story" ? "故事版" : "快速版";
+  return mode === "story" ? "story version" : "quick version";
+}
+
+function introPlayLabel(box) {
+  const lang = box.dataset.activeIntroLang || "zh";
+  const mode = box.dataset.activeIntroMode || "quick";
+  if (lang === "zh") return `播放${introModeName(mode, lang)}`;
+  return mode === "story" ? "Play story" : "Play quick version";
 }
 
 function playDetailIntro(box) {
@@ -1947,7 +2003,8 @@ function playDetailIntro(box) {
     return;
   }
   const lang = box.dataset.activeIntroLang || "zh";
-  const text = box.querySelector(`[data-intro-text="${lang}"]`)?.textContent?.trim();
+  const mode = box.dataset.activeIntroMode || "quick";
+  const text = box.querySelector(`[data-intro-lang="${lang}"][data-intro-mode-text="${mode}"]`)?.textContent?.trim();
   if (!text) return;
 
   const selected = voiceForLanguage(lang);
@@ -1972,13 +2029,14 @@ function playDetailIntro(box) {
   speechSynthesis.cancel();
   box.dataset.introSpeaking = lang;
   box.dataset.introToken = token;
-  if (status) status.textContent = lang === "zh" ? "正在朗读中文介绍" : "Reading English introduction";
+  const modeLabel = introModeName(mode, lang);
+  if (status) status.textContent = lang === "zh" ? `正在朗读中文${modeLabel}介绍` : `Reading English ${modeLabel}`;
   if (playButton) {
-    playButton.textContent = lang === "zh" ? "正在朗读中文" : "Reading English";
+    playButton.textContent = lang === "zh" ? `正在朗读${modeLabel}` : `Reading ${modeLabel}`;
     playButton.setAttribute("aria-busy", "true");
   }
   speechSynthesis.speak(utterance);
-  showToast(lang === "zh" ? "正在朗读中文简介。" : "Reading the English introduction.");
+  showToast(lang === "zh" ? `正在朗读中文${modeLabel}。` : `Reading the English ${modeLabel}.`);
 }
 
 function stopIntroPlayback(box, showMessage = true) {
@@ -2094,6 +2152,13 @@ function bindEvents() {
     if (introSwitch) {
       const introBox = introSwitch.closest("[data-audio-intro]");
       if (introBox) setIntroLanguage(introBox, introSwitch.dataset.introSwitch);
+      return;
+    }
+
+    const introMode = event.target.closest("[data-intro-mode]");
+    if (introMode) {
+      const introBox = introMode.closest("[data-audio-intro]");
+      if (introBox) setIntroMode(introBox, introMode.dataset.introMode);
       return;
     }
 
