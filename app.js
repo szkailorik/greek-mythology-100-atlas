@@ -108,7 +108,9 @@ const state = {
   query: "",
   sort: "rank",
   englishVoiceName: "",
-  greekVoiceName: ""
+  greekVoiceName: "",
+  quizId: "",
+  quizRevealed: false
 };
 
 let imageObserver = null;
@@ -197,6 +199,8 @@ const propVisualNotes = {
   torch: ["火炬", "火炬提示引导、仪式、夜行和寻找。"],
   scroll: ["卷轴", "卷轴把历史、诗歌、法律或记忆变成可保存的知识。"],
   stars: ["星群", "星群提示天象、夜空、预言或更高层的宇宙秩序。"],
+  light: ["光辉", "光辉适合表现太阳家族、上层空气和神圣可见性，让抽象的明亮力量更容易被看见。"],
+  rainbow: ["彩虹", "彩虹直接提示天与地之间的传信通道，也适合表现速度、颜色和神圣消息。"],
   wave: ["海浪", "海浪直接指向海洋、航海、水域祖先或流动自然力。"],
   wind: ["风带", "风带和流线表现方向、速度和不可抓住的气流。"],
   flowers: ["花与花冠", "花朵表现青春、魅力、春季成长或艺术性的柔美。"],
@@ -230,6 +234,7 @@ const els = {
   voiceSelect: document.querySelector("#voiceSelect"),
   stopSpeech: document.querySelector("#stopSpeech"),
   filters: document.querySelector("#groupFilters"),
+  memoryTrainer: document.querySelector("#memoryTrainer"),
   lineageBoard: document.querySelector("#lineageBoard"),
   catalog: document.querySelector("#catalog"),
   dialog: document.querySelector("#detailDialog"),
@@ -380,6 +385,81 @@ function renderFilters() {
       return `<button class="filter-button" type="button" data-group="${escapeHtml(group)}" aria-pressed="${group === state.group}">${escapeHtml(group)} ${count}</button>`;
     })
     .join("");
+}
+
+function renderMemoryTrainer() {
+  if (!els.memoryTrainer) return;
+  const item = currentQuizItem();
+  const profile = visualProfile(item);
+  const [propLabel] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
+  const answer = state.quizRevealed
+    ? `
+      <div class="memory-answer is-revealed">
+        <span>答案</span>
+        <strong>${escapeHtml(item.name)} · ${escapeHtml(item.cn)}</strong>
+        <em>${escapeHtml(item.greek)} · ${escapeHtml(item.pronunciation)}</em>
+        <p>${escapeHtml(cardImageCue(item, profile))}</p>
+      </div>
+    `
+    : `
+      <div class="memory-answer">
+        <span>先猜一猜</span>
+        <strong>这是哪位神？</strong>
+        <em>看主符号、神职和画面元素。</em>
+      </div>
+    `;
+
+  els.memoryTrainer.innerHTML = `
+    <div class="memory-copy">
+      <p class="eyebrow">Picture Memory</p>
+      <h2 id="memoryTrainerTitle">看图认神练习</h2>
+      <p>先观察全身形象里的道具和神职标签，再点开答案。每次只练一位，适合快速复习。</p>
+    </div>
+    <div class="memory-stage">
+      <div class="memory-image art-frame">
+        <img src="${escapeHtml(deityImageSource(item))}" alt="看图认神练习：${escapeHtml(item.name)} 的现代生成全身形象">
+        ${renderPortraitQuickLabel(item, profile)}
+      </div>
+      <div class="memory-panel">
+        <div class="memory-clues" aria-label="看图线索">
+          ${renderMemoryClue("主符号", propLabel)}
+          ${renderMemoryClue("神职", item.domains.slice(0, 2).join(" / "))}
+          ${renderMemoryClue("象征物", item.symbols.slice(0, 3).join(" / "))}
+        </div>
+        ${answer}
+        <div class="memory-actions">
+          <button class="memory-primary" type="button" data-quiz-reveal>${state.quizRevealed ? "再看答案" : "看答案"}</button>
+          <button type="button" data-quiz-next>换一位</button>
+          <button type="button" data-speak="${escapeHtml(item.id)}" data-speak-lang="en">听英文名</button>
+          <button type="button" data-detail="${escapeHtml(item.id)}">打开详情</button>
+        </div>
+      </div>
+    </div>
+  `;
+}
+
+function renderMemoryClue(label, value) {
+  return `
+    <div class="memory-clue">
+      <span>${escapeHtml(label)}</span>
+      <strong>${escapeHtml(value)}</strong>
+    </div>
+  `;
+}
+
+function currentQuizItem() {
+  if (!state.quizId) state.quizId = deities[0].id;
+  return deities.find((item) => item.id === state.quizId) || deities[0];
+}
+
+function nextQuizItem() {
+  const currentIndex = deities.findIndex((item) => item.id === state.quizId);
+  let nextIndex = Math.floor(Math.random() * deities.length);
+  if (deities.length > 1 && nextIndex === currentIndex) {
+    nextIndex = (nextIndex + 17) % deities.length;
+  }
+  state.quizId = deities[nextIndex].id;
+  state.quizRevealed = false;
 }
 
 function renderLineageBoard() {
@@ -665,12 +745,25 @@ function pickVisualProp(item) {
     hephaestus: "hammerAnvil", hermes: "caduceus", dionysus: "grapesCup", hades: "bident",
     hestia: "hearth", persephone: "pomegranate", helios: "sunChariot", selene: "moon",
     eos: "dawn", hecate: "twinTorches", pan: "pipes", asclepius: "serpentStaff",
-    hypnos: "poppy", thanatos: "downTorch", nemesis: "scales", tyche: "cornucopia",
+    eros: "bow", nike: "laurel", hebe: "cup", iris: "rainbow", hygieia: "serpentStaff",
+    hypnos: "poppy", thanatos: "downTorch", morpheus: "poppy", nemesis: "scales", tyche: "cornucopia",
     themis: "scalesSword", rhea: "lionDrum", cronus: "sickle", oceanus: "waveHorn",
-    atlas: "globe", prometheus: "fireChain", gaia: "earthFruit", uranus: "starScythe",
-    nyx: "nightStars", chaos: "void", phanes: "cosmicEgg", clotho: "spindle",
+    leto: "flowers", hyperion: "light", theia: "light", coeus: "stars", phoebe: "moon",
+    iapetus: "chains", crius: "stars", mnemosyne: "scroll", epimetheus: "scroll",
+    metis: "owlShield", dione: "shellRose", astraeus: "stars", amphitrite: "wave",
+    triton: "waveHorn", proteus: "wave", nereus: "waveHorn", thetis: "wave", galatea: "wave",
+    boreas: "wind", zephyrus: "wind", notus: "wind", eurus: "wind", aeolus: "wind",
+    glaucus: "wave", leucothea: "wave", atlas: "globe", prometheus: "fireChain",
+    gaia: "earthFruit", uranus: "starScythe", nyx: "nightStars", erebus: "nightStars",
+    tartarus: "void", aether: "light", hemera: "dawn", pontus: "wave", chaos: "void",
+    phanes: "cosmicEgg", clotho: "spindle",
     lachesis: "measureThread", atropos: "shears", eris: "apple", harmonia: "necklace",
-    urania: "globeCompass"
+    enyo: "spearShield", deimos: "mask", phobos: "mask", eileithyia: "torch",
+    peitho: "flowers", hymen: "torch", priapus: "earthFruit", anteros: "bow",
+    kratos: "chains", bia: "chains", zelus: "flame", aglaea: "flowers",
+    calliope: "scroll", clio: "scroll", erato: "lyre", euterpe: "lyre",
+    melpomene: "mask", polyhymnia: "scroll", terpsichore: "lyre", "thalia-muse": "mask",
+    urania: "globeCompass", maia: "stars"
   };
   if (exact[item.id]) return exact[item.id];
   if (text.includes("三叉戟")) return "trident";
@@ -686,6 +779,8 @@ function pickVisualProp(item) {
   if (text.includes("天平")) return "scales";
   if (text.includes("卷轴") || text.includes("书")) return "scroll";
   if (text.includes("星") || text.includes("天文")) return "stars";
+  if (text.includes("光") || text.includes("明亮") || text.includes("视觉")) return "light";
+  if (text.includes("彩虹")) return "rainbow";
   if (text.includes("海") || text.includes("浪")) return "wave";
   if (text.includes("风")) return "wind";
   if (text.includes("花")) return "flowers";
@@ -769,7 +864,8 @@ function propSvg(profile) {
     earthFruit: earthFruitSvg, starScythe: starScytheSvg, nightStars: starsSvg, void: voidSvg,
     cosmicEgg: cosmicEggSvg, spindle: spindleSvg, measureThread: measureThreadSvg, shears: shearsSvg,
     apple: appleSvg, necklace: necklaceSvg, globeCompass: globeCompassSvg, bow: moonBowSvg, lyre: sunLyreSvg,
-    torch: twinTorchesSvg, scroll: scrollSvg, stars: starsSvg, wave: waveSvg, wind: windSvg, flowers: flowersSvg,
+    torch: twinTorchesSvg, scroll: scrollSvg, stars: starsSvg, light: starsSvg, rainbow: windSvg,
+    wave: waveSvg, wind: windSvg, flowers: flowersSvg,
     mask: maskSvg, chains: fireChainSvg, flame: hearthSvg, cup: grapesCupSvg, laurel: laurelSvg
   };
   return (propMap[prop] || laurelSvg)(common);
@@ -1546,6 +1642,19 @@ function bindEvents() {
     if ("speechSynthesis" in window) speechSynthesis.cancel();
   });
 
+  els.memoryTrainer.addEventListener("click", (event) => {
+    if (event.target.closest("[data-quiz-reveal]")) {
+      state.quizRevealed = true;
+      renderMemoryTrainer();
+      return;
+    }
+
+    if (event.target.closest("[data-quiz-next]")) {
+      nextQuizItem();
+      renderMemoryTrainer();
+    }
+  });
+
   els.searchSuggestions.addEventListener("click", (event) => {
     const suggestionButton = event.target.closest("[data-search-suggestion]");
     const clearButton = event.target.closest("[data-search-clear]");
@@ -1599,6 +1708,7 @@ function bindEvents() {
 }
 
 function init() {
+  renderMemoryTrainer();
   renderLineageBoard();
   renderFilters();
   renderCatalog();

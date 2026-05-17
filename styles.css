@@ -66,6 +66,7 @@ a {
 .header-main,
 .controls,
 .search-suggestions,
+.memory-trainer,
 .lineage-overview,
 .lineage-board,
 .filters,
@@ -205,9 +206,143 @@ h1 {
 .lineage-lane button:hover,
 .overview-node:hover,
 .relation-chip:hover,
-.pronunciation-action:hover {
+.pronunciation-action:hover,
+.memory-actions button:hover {
   border-color: rgba(25, 95, 115, 0.45);
   color: var(--sea);
+}
+
+.memory-trainer {
+  display: grid;
+  grid-template-columns: minmax(220px, 0.68fr) minmax(320px, 1.32fr);
+  gap: 14px;
+  margin-top: 16px;
+  border: 1px solid rgba(25, 95, 115, 0.18);
+  border-radius: 8px;
+  padding: 14px;
+  background: rgba(255, 253, 248, 0.88);
+}
+
+.memory-copy {
+  display: grid;
+  align-content: start;
+  gap: 7px;
+}
+
+.memory-copy h2 {
+  margin: 0;
+  font-family: Georgia, "Times New Roman", "Noto Serif SC", serif;
+  font-size: 1.28rem;
+  line-height: 1.12;
+}
+
+.memory-copy p {
+  margin: 0;
+  color: #3f3b35;
+  line-height: 1.55;
+}
+
+.memory-stage {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(190px, 0.78fr) minmax(240px, 1fr);
+  gap: 12px;
+}
+
+.memory-image {
+  min-height: 320px;
+  border: 1px solid rgba(25, 95, 115, 0.16);
+  border-radius: 8px;
+}
+
+.memory-panel {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 10px;
+}
+
+.memory-clues {
+  display: grid;
+  gap: 7px;
+}
+
+.memory-clue {
+  display: grid;
+  grid-template-columns: 64px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  border-bottom: 1px solid rgba(31, 36, 48, 0.08);
+  padding-bottom: 7px;
+}
+
+.memory-clue span,
+.memory-answer span {
+  color: var(--muted);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
+.memory-clue strong {
+  min-width: 0;
+  color: var(--ink);
+  font-size: 0.9rem;
+  overflow-wrap: anywhere;
+}
+
+.memory-answer {
+  display: grid;
+  gap: 4px;
+  border: 1px solid rgba(127, 48, 67, 0.16);
+  border-radius: 8px;
+  padding: 10px;
+  background: rgba(127, 48, 67, 0.06);
+}
+
+.memory-answer.is-revealed {
+  border-color: rgba(25, 95, 115, 0.2);
+  background: rgba(25, 95, 115, 0.07);
+}
+
+.memory-answer strong {
+  color: var(--wine);
+  font-size: 1.05rem;
+}
+
+.memory-answer em {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-style: normal;
+  font-weight: 850;
+}
+
+.memory-answer p {
+  margin: 2px 0 0;
+  color: #3f3b35;
+  font-size: 0.88rem;
+  line-height: 1.5;
+}
+
+.memory-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.memory-actions button {
+  min-height: 34px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 10px;
+  color: var(--ink);
+  background: #fff;
+  font-weight: 850;
+}
+
+.memory-actions .memory-primary {
+  border-color: rgba(127, 48, 67, 0.42);
+  color: #fff;
+  background: var(--wine);
 }
 
 .lineage-overview {
@@ -1493,8 +1628,13 @@ button.ancestry-node:focus-visible {
     grid-template-columns: 1fr 1fr;
   }
 
+  .memory-trainer,
   .lineage-overview {
     grid-template-columns: 1fr;
+  }
+
+  .memory-stage {
+    grid-template-columns: minmax(220px, 0.82fr) minmax(240px, 1fr);
   }
 
   .lineage-board-head {
@@ -1528,6 +1668,7 @@ button.ancestry-node:focus-visible {
   .header-main,
   .controls,
   .search-suggestions,
+  .memory-trainer,
   .lineage-overview,
   .lineage-board,
   .filters,
@@ -1546,6 +1687,15 @@ button.ancestry-node:focus-visible {
 
   .lineage-lanes {
     grid-template-columns: 1fr;
+  }
+
+  .memory-stage,
+  .memory-clue {
+    grid-template-columns: 1fr;
+  }
+
+  .memory-image {
+    min-height: 300px;
   }
 
   .lineage-board-grid,
