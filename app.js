@@ -107,7 +107,8 @@ const state = {
   group: "全部",
   query: "",
   sort: "rank",
-  voiceName: ""
+  englishVoiceName: "",
+  greekVoiceName: ""
 };
 
 let imageObserver = null;
@@ -263,7 +264,41 @@ function escapeHtml(value) {
 }
 
 function normalize(value) {
-  return String(value).toLocaleLowerCase("en-US");
+  return stripDiacritics(value)
+    .toLocaleLowerCase("en-US")
+    .replace(/[^\p{Letter}\p{Number}\u4e00-\u9fff]+/gu, " ")
+    .replace(/\s+/gu, " ")
+    .trim();
+}
+
+function stripDiacritics(value) {
+  return String(value).normalize("NFD").replace(/\p{Mark}/gu, "");
+}
+
+function transliterateGreek(value) {
+  const map = {
+    α: "a", β: "b", γ: "g", δ: "d", ε: "e", ζ: "z", η: "e", θ: "th", ι: "i", κ: "k",
+    λ: "l", μ: "m", ν: "n", ξ: "x", ο: "o", π: "p", ρ: "r", σ: "s", ς: "s", τ: "t",
+    υ: "y", φ: "ph", χ: "ch", ψ: "ps", ω: "o"
+  };
+  return stripDiacritics(value)
+    .toLocaleLowerCase("el-GR")
+    .replace(/[α-ω]/gu, (letter) => map[letter] || letter);
+}
+
+function searchTextVariants(value) {
+  const source = String(value || "");
+  const variants = [source, transliterateGreek(source)];
+  return [...new Set(variants.map(normalize).filter(Boolean))];
+}
+
+function searchTokens(value) {
+  return searchTextVariants(value)
+    .join(" ")
+    .replace(/([a-z])([\u4e00-\u9fff])/giu, "$1 $2")
+    .replace(/([\u4e00-\u9fff])([a-z])/giu, "$1 $2")
+    .split(/\s+/u)
+    .filter(Boolean);
 }
 
 function wikiUrl(item) {
@@ -273,14 +308,17 @@ function wikiUrl(item) {
 function getSearchText(item) {
   const story = getStory(item);
   const lineage = getLineage(item);
-  return normalize([
+  return searchTextVariants([
+    item.id,
     item.name,
     item.cn,
     item.greek,
+    transliterateGreek(item.greek),
     item.group,
     item.domains.join(" "),
     item.symbols.join(" "),
     item.pronunciation,
+    item.speech,
     item.artwork.title,
     item.artwork.artist,
     item.summary,
@@ -289,7 +327,44 @@ function getSearchText(item) {
     story.zh,
     story.en,
     relationSearchText(lineage)
-  ].join(" "));
+  ].join(" ")).join(" ");
+}
+
+function getPrimarySearchText(item) {
+  return searchTextVariants([
+    item.id,
+    item.name,
+    item.cn,
+    item.greek,
+    transliterateGreek(item.greek),
+    item.speech
+  ].join(" ")).join(" ");
+}
+
+function getFacetSearchText(item) {
+  return searchTextVariants([
+    item.group,
+    item.domains.join(" "),
+    item.symbols.join(" "),
+    item.pronunciation,
+    item.artwork.title,
+    item.artwork.artist
+  ].join(" ")).join(" ");
+}
+
+function itemSearchScore(item, terms) {
+  if (!terms.length) return 0;
+  const primary = getPrimarySearchText(item);
+  const facets = getFacetSearchText(item);
+  const everything = getSearchText(item);
+  return terms.reduce((score, term) => {
+    const exactName = normalize(item.name) === term || normalize(item.cn) === term || normalize(item.id) === term;
+    if (exactName) return score + 120;
+    if (primary.includes(term)) return score + 80;
+    if (facets.includes(term)) return score + 38;
+    if (everything.includes(term)) return score + 10;
+    return score;
+  }, 0);
 }
 
 function renderFilters() {
@@ -312,9 +387,9 @@ function renderLineageBoard() {
     <div class="lineage-board-head">
       <div>
         <p class="eyebrow">Family Lines</p>
-        <h2>谱系主干板</h2>
+        <h2>必记主干谱系</h2>
       </div>
-      <p>把最容易混乱的关系拆成五条主线：先看父母和后代，再点进详情看异说。</p>
+      <p>这里只放最常识的几组关系，复杂分支和异说放到每位神的详情页里。</p>
     </div>
     <div class="lineage-board-grid">
       ${lineageOverview.map(renderOverviewGroup).join("")}
@@ -360,15 +435,20 @@ function renderOverviewNodes(ids = [], names = [], emptyText) {
 }
 
 function getVisibleItems() {
-  const terms = normalize(state.query).split(/\s+/u).filter(Boolean);
+  const terms = searchTokens(state.query);
   return deities
     .filter((item) => state.group === "全部" || item.group === state.group)
     .filter((item) => {
       if (!terms.length) return true;
       const haystack = getSearchText(item);
-      return terms.every((term) => haystack.includes(term));
+      const compactHaystack = haystack.replace(/\s+/gu, "");
+      return terms.every((term) => haystack.includes(term) || compactHaystack.includes(term.replace(/\s+/gu, "")));
     })
     .sort((a, b) => {
+      if (terms.length) {
+        const scoreDiff = itemSearchScore(b, terms) - itemSearchScore(a, terms);
+        if (scoreDiff) return scoreDiff;
+      }
       if (state.sort === "name") return a.name.localeCompare(b.name, "en");
       if (state.sort === "group") return a.group.localeCompare(b.group, "zh-Hans-CN") || a.rank - b.rank;
       return a.rank - b.rank;
@@ -403,19 +483,19 @@ function renderCard(item) {
       </div>
       <div class="card-body">
         <div class="card-title-row">
-          <button class="name-button" type="button" data-speak="${escapeHtml(item.id)}" title="朗读 ${escapeHtml(item.name)}">
+          <button class="name-button" type="button" data-speak="${escapeHtml(item.id)}" data-speak-lang="en" title="朗读英文名 ${escapeHtml(item.name)}">
             <strong>${escapeHtml(item.name)}</strong>
             <span>${escapeHtml(item.pronunciation)}</span>
           </button>
           <span class="cn-name">${escapeHtml(item.cn)}</span>
         </div>
-        <div class="pronunciation">点击英文名听发音</div>
+        <div class="pronunciation">点击英文名听英文发音；点击希腊文听希腊语读法</div>
         ${tagList(item.domains, "domain-list")}
         <p class="summary">${escapeHtml(item.summary)}</p>
         <p class="artwork-line"><span>经典艺术参考</span>${escapeHtml(item.artwork.title)} · ${escapeHtml(item.artwork.artist)} · ${escapeHtml(item.artwork.year)}</p>
         <p class="story-line"><span>代表小故事</span>${escapeHtml(story.titleZh)} · ${escapeHtml(story.titleEn)}</p>
         <div class="card-footer">
-          <span class="greek-name">${escapeHtml(item.greek)}</span>
+          <button class="greek-name" type="button" data-speak="${escapeHtml(item.id)}" data-speak-lang="el" title="朗读希腊文名 ${escapeHtml(item.greek)}">${escapeHtml(item.greek)}</button>
           <button class="card-action" type="button" data-detail="${escapeHtml(item.id)}">详情</button>
         </div>
       </div>
@@ -1241,13 +1321,13 @@ function openDetail(id) {
       <div class="detail-topline">
         <div>
           <p class="eyebrow">${escapeHtml(item.group)} · #${item.rank}</p>
-          <h2><button type="button" data-speak="${escapeHtml(item.id)}">${escapeHtml(item.name)}</button></h2>
+          <h2><button type="button" data-speak="${escapeHtml(item.id)}" data-speak-lang="en" title="朗读英文名 ${escapeHtml(item.name)}">${escapeHtml(item.name)}</button></h2>
         </div>
         <button class="close-button" type="button" data-close-dialog aria-label="关闭">×</button>
       </div>
       <div class="metadata">
-        <span>${escapeHtml(item.cn)} · ${escapeHtml(item.greek)}</span>
-        <span>英文常见读音：${escapeHtml(item.pronunciation)}</span>
+        <span>${escapeHtml(item.cn)} · <button class="inline-greek-name" type="button" data-speak="${escapeHtml(item.id)}" data-speak-lang="el" title="朗读希腊文名 ${escapeHtml(item.greek)}">${escapeHtml(item.greek)}</button></span>
+        <span>英文常见读音：${escapeHtml(item.pronunciation)} · 希腊文名可点击朗读</span>
       </div>
       ${tagList(item.domains, "domain-list")}
       ${tagList(item.symbols, "symbol-list")}
@@ -1286,11 +1366,20 @@ function populateVoices() {
   }
 
   const voices = speechSynthesis.getVoices();
-  const englishVoices = voices.filter((voice) => /^en[-_]/iu.test(voice.lang));
-  const candidates = englishVoices.length ? englishVoices : voices;
+  const rawEnglishVoices = voices.filter((voice) => /^en[-_]/iu.test(voice.lang));
+  const englishVoices = voices
+    .filter((voice) => /^en[-_]/iu.test(voice.lang))
+    .filter((voice) => !isNoveltyVoice(voice.name))
+    .sort((a, b) => voiceScore(b, "en") - voiceScore(a, "en"));
+  const greekVoices = voices
+    .filter((voice) => /^el[-_]/iu.test(voice.lang))
+    .sort((a, b) => voiceScore(b, "el") - voiceScore(a, "el"));
+  const candidates = englishVoices.length
+    ? englishVoices
+    : (rawEnglishVoices.length ? rawEnglishVoices : voices).sort((a, b) => voiceScore(b, "en") - voiceScore(a, "en"));
 
   if (!candidates.length) {
-    els.voiceSelect.innerHTML = `<option value="">默认英文语音</option>`;
+    els.voiceSelect.innerHTML = `<option value="">默认英文语音（加载中）</option>`;
     return;
   }
 
@@ -1299,16 +1388,48 @@ function populateVoices() {
     return `<option value="${escapeHtml(voice.name)}">${escapeHtml(label)}</option>`;
   }).join("");
 
-  const preferred = candidates.find((voice) => voice.lang === "en-US")
-    || candidates.find((voice) => /^en-US/iu.test(voice.lang))
-    || candidates.find((voice) => /^en-GB/iu.test(voice.lang))
-    || candidates[0];
+  const preferred = pickVoice(candidates, "en");
 
-  state.voiceName = state.voiceName || preferred.name;
-  els.voiceSelect.value = state.voiceName;
+  state.englishVoiceName = voiceStillAvailable(state.englishVoiceName, candidates) ? state.englishVoiceName : preferred?.name || "";
+  state.greekVoiceName = voiceStillAvailable(state.greekVoiceName, greekVoices) ? state.greekVoiceName : (pickVoice(greekVoices, "el")?.name || "");
+  els.voiceSelect.value = state.englishVoiceName;
 }
 
-function speakItem(id) {
+function voiceStillAvailable(name, voices) {
+  return Boolean(name && voices.some((voice) => voice.name === name));
+}
+
+function voiceScore(voice, lang) {
+  let score = 0;
+  if (lang === "en" && voice.lang === "en-US") score += 70;
+  if (lang === "en" && /^en[-_]GB/iu.test(voice.lang)) score += 45;
+  if (lang === "el" && /^el[-_]GR/iu.test(voice.lang)) score += 80;
+  if (/samantha|alex|ava|allison|susan|victoria|daniel|karen|moira|tessa|serena|google|microsoft|aria|natural|premium|enhanced/iu.test(voice.name)) score += 25;
+  if (voice.localService) score += 4;
+  if (isNoveltyVoice(voice.name)) score -= 80;
+  return score;
+}
+
+function isNoveltyVoice(name) {
+  return /(albert|bad news|bahh|bells|boing|bubbles|cellos|fred|good news|jester|junior|kathy|organ|superstar|trinoids|whisper|wobble|zarvox|rocko|sandy|shelley|grandma|grandpa)/iu.test(name);
+}
+
+function pickVoice(voices, lang) {
+  if (!voices.length) return null;
+  return voices.find((voice) => !isNoveltyVoice(voice.name)) || voices[0];
+}
+
+function voiceForLanguage(lang) {
+  const voices = speechSynthesis.getVoices();
+  if (lang === "el") {
+    const greekVoices = voices.filter((voice) => /^el[-_]/iu.test(voice.lang)).sort((a, b) => voiceScore(b, "el") - voiceScore(a, "el"));
+    return greekVoices.find((voice) => voice.name === state.greekVoiceName) || pickVoice(greekVoices, "el");
+  }
+  const englishVoices = voices.filter((voice) => /^en[-_]/iu.test(voice.lang)).sort((a, b) => voiceScore(b, "en") - voiceScore(a, "en"));
+  return englishVoices.find((voice) => voice.name === state.englishVoiceName) || pickVoice(englishVoices, "en");
+}
+
+function speakItem(id, lang = "en") {
   const item = deities.find((entry) => entry.id === id);
   if (!item) return;
 
@@ -1317,21 +1438,24 @@ function speakItem(id) {
     return;
   }
 
-  const voices = speechSynthesis.getVoices();
-  const selected = voices.find((voice) => voice.name === els.voiceSelect.value)
-    || voices.find((voice) => voice.lang === "en-US")
-    || voices.find((voice) => /^en[-_]/iu.test(voice.lang));
+  const selected = voiceForLanguage(lang);
+  const text = lang === "el" ? item.greek : item.speech;
+  const fallbackLang = lang === "el" ? "el-GR" : "en-US";
 
-  const utterance = new SpeechSynthesisUtterance(item.speech);
+  const utterance = new SpeechSynthesisUtterance(text);
   if (selected) utterance.voice = selected;
-  utterance.lang = selected?.lang || "en-US";
-  utterance.rate = 0.82;
+  utterance.lang = selected?.lang || fallbackLang;
+  utterance.rate = lang === "el" ? 0.72 : 0.82;
   utterance.pitch = 1;
   utterance.volume = 1;
 
   speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
-  showToast(`${item.name}: ${item.pronunciation}`);
+  if (lang === "el") {
+    showToast(`${item.greek} · 希腊语朗读${selected ? "" : "（系统无希腊语音时为近似读法）"}`);
+  } else {
+    showToast(`${item.name}: ${item.pronunciation}`);
+  }
 }
 
 let toastTimer = null;
@@ -1344,7 +1468,11 @@ function showToast(message) {
 
 function bindEvents() {
   els.searchInput.addEventListener("input", (event) => {
-    state.query = event.target.value;
+    state.query = event.target.value.trim();
+    if (state.query && state.group !== "全部") {
+      state.group = "全部";
+      renderFilters();
+    }
     renderCatalog();
   });
 
@@ -1354,7 +1482,7 @@ function bindEvents() {
   });
 
   els.voiceSelect.addEventListener("change", (event) => {
-    state.voiceName = event.target.value;
+    state.englishVoiceName = event.target.value;
   });
 
   els.stopSpeech.addEventListener("click", () => {
@@ -1372,7 +1500,7 @@ function bindEvents() {
   document.addEventListener("click", (event) => {
     const speakButton = event.target.closest("[data-speak]");
     if (speakButton) {
-      speakItem(speakButton.dataset.speak);
+      speakItem(speakButton.dataset.speak, speakButton.dataset.speakLang || "en");
       return;
     }
 

@@ -30,10 +30,14 @@ body {
   margin: 0;
   color: var(--ink);
   background:
-    linear-gradient(90deg, rgba(31, 36, 48, 0.035) 1px, transparent 1px),
-    linear-gradient(180deg, rgba(31, 36, 48, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(247, 242, 232, 0.82), rgba(247, 242, 232, 0.94) 46%, rgba(247, 242, 232, 0.98)),
+    linear-gradient(90deg, rgba(31, 36, 48, 0.03) 1px, transparent 1px),
+    linear-gradient(180deg, rgba(31, 36, 48, 0.024) 1px, transparent 1px),
+    url("assets/backgrounds/olympus-site-background.png"),
     var(--paper);
-  background-size: 44px 44px;
+  background-attachment: fixed, fixed, fixed, fixed, scroll;
+  background-position: center, center, center, center top, center;
+  background-size: cover, 44px 44px, 44px 44px, cover, auto;
 }
 
 button,
@@ -55,7 +59,7 @@ a {
   top: 0;
   z-index: 5;
   border-bottom: 1px solid var(--line);
-  background: rgba(247, 242, 232, 0.94);
+  background: rgba(247, 242, 232, 0.9);
   backdrop-filter: blur(18px);
 }
 
@@ -168,6 +172,8 @@ h1 {
 .icon-button:hover,
 .name-button:hover,
 .card-action:hover,
+.greek-name:hover,
+.inline-greek-name:hover,
 .filter-button:hover,
 .lineage-lane button:hover,
 .overview-node:hover,
@@ -639,8 +645,22 @@ h1 {
 
 .greek-name {
   min-width: 0;
+  border: 0;
+  padding: 0;
   color: var(--muted);
+  background: transparent;
   font-family: Georgia, "Times New Roman", serif;
+  text-align: left;
+  overflow-wrap: anywhere;
+}
+
+.inline-greek-name {
+  border: 0;
+  padding: 0;
+  color: var(--sea);
+  background: transparent;
+  font-family: Georgia, "Times New Roman", serif;
+  font-weight: 800;
   overflow-wrap: anywhere;
 }
 
