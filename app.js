@@ -1337,7 +1337,7 @@ function renderPronunciationBox(item) {
 function renderAudioIntroBox(item, profile) {
   const intro = detailAudioIntro(item, profile);
   return `
-    <section class="audio-intro-box" data-audio-intro="${escapeHtml(item.id)}" data-active-intro-lang="zh" data-active-intro-mode="quick">
+    <section class="audio-intro-box" data-audio-intro="${escapeHtml(item.id)}" data-active-intro-lang="zh" data-active-intro-mode="quick" data-active-intro-speed="normal">
       <div class="audio-intro-head">
         <h3>语音简介</h3>
         <span data-intro-status>默认不自动播放</span>
@@ -1351,6 +1351,10 @@ function renderAudioIntroBox(item, profile) {
           <button type="button" data-intro-mode="quick" aria-pressed="true">快速版</button>
           <button type="button" data-intro-mode="story" aria-pressed="false">故事版</button>
         </div>
+        <div class="audio-intro-tabs audio-intro-speed-tabs" aria-label="${escapeHtml(item.name)} 语音简介语速">
+          <button type="button" data-intro-speed="normal" aria-pressed="true">标准语速</button>
+          <button type="button" data-intro-speed="slow" aria-pressed="false">慢速</button>
+        </div>
       </div>
       <div class="audio-intro-copy">
         <p data-intro-lang="zh" data-intro-mode-text="quick" lang="zh-CN">${escapeHtml(intro.zhQuick)}</p>
@@ -1362,7 +1366,7 @@ function renderAudioIntroBox(item, profile) {
         <button class="audio-intro-play" type="button" data-intro-play>播放快速版</button>
         <button type="button" data-intro-stop>停止</button>
       </div>
-      <p class="audio-intro-note">快速版适合先认识神祇；故事版会补充谱系和代表故事。语音只会在点击后开始。</p>
+      <p class="audio-intro-note">快速版适合先认识神祇；故事版会补充谱系和代表故事。语音只会在点击后开始，可切换慢速跟读。</p>
     </section>
   `;
 }
@@ -1971,14 +1975,28 @@ function setIntroMode(box, mode) {
   resetIntroPlayback(box, lang === "zh" ? `已切换到${label}` : `Switched to ${label}`);
 }
 
+function setIntroSpeed(box, speed) {
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  activeIntroToken += 1;
+  box.dataset.activeIntroSpeed = speed;
+  updateIntroSelection(box);
+  const lang = box.dataset.activeIntroLang || "zh";
+  const label = introSpeedName(speed, lang);
+  resetIntroPlayback(box, lang === "zh" ? `已切换到${label}` : `Switched to ${label}`);
+}
+
 function updateIntroSelection(box) {
   const lang = box.dataset.activeIntroLang || "zh";
   const mode = box.dataset.activeIntroMode || "quick";
+  const speed = box.dataset.activeIntroSpeed || "normal";
   box.querySelectorAll("[data-intro-switch]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.introSwitch === lang));
   });
   box.querySelectorAll("[data-intro-mode]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.introMode === mode));
+  });
+  box.querySelectorAll("[data-intro-speed]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.introSpeed === speed));
   });
   box.querySelectorAll("[data-intro-lang][data-intro-mode-text]").forEach((copy) => {
     copy.hidden = copy.dataset.introLang !== lang || copy.dataset.introModeText !== mode;
@@ -1988,6 +2006,16 @@ function updateIntroSelection(box) {
 function introModeName(mode, lang) {
   if (lang === "zh") return mode === "story" ? "故事版" : "快速版";
   return mode === "story" ? "story version" : "quick version";
+}
+
+function introSpeedName(speed, lang) {
+  if (lang === "zh") return speed === "slow" ? "慢速" : "标准语速";
+  return speed === "slow" ? "slow speed" : "normal speed";
+}
+
+function introSpeechRate(lang, speed) {
+  if (lang === "zh") return speed === "slow" ? 0.72 : 0.86;
+  return speed === "slow" ? 0.68 : 0.82;
 }
 
 function introPlayLabel(box) {
@@ -2004,6 +2032,7 @@ function playDetailIntro(box) {
   }
   const lang = box.dataset.activeIntroLang || "zh";
   const mode = box.dataset.activeIntroMode || "quick";
+  const speed = box.dataset.activeIntroSpeed || "normal";
   const text = box.querySelector(`[data-intro-lang="${lang}"][data-intro-mode-text="${mode}"]`)?.textContent?.trim();
   if (!text) return;
 
@@ -2011,7 +2040,7 @@ function playDetailIntro(box) {
   const utterance = new SpeechSynthesisUtterance(text);
   if (selected) utterance.voice = selected;
   utterance.lang = selected?.lang || (lang === "zh" ? "zh-CN" : "en-US");
-  utterance.rate = lang === "zh" ? 0.86 : 0.82;
+  utterance.rate = introSpeechRate(lang, speed);
   utterance.pitch = 1;
   utterance.volume = 1;
 
@@ -2030,13 +2059,14 @@ function playDetailIntro(box) {
   box.dataset.introSpeaking = lang;
   box.dataset.introToken = token;
   const modeLabel = introModeName(mode, lang);
-  if (status) status.textContent = lang === "zh" ? `正在朗读中文${modeLabel}介绍` : `Reading English ${modeLabel}`;
+  const speedLabel = introSpeedName(speed, lang);
+  if (status) status.textContent = lang === "zh" ? `正在以${speedLabel}朗读中文${modeLabel}` : `Reading English ${modeLabel} at ${speedLabel}`;
   if (playButton) {
     playButton.textContent = lang === "zh" ? `正在朗读${modeLabel}` : `Reading ${modeLabel}`;
     playButton.setAttribute("aria-busy", "true");
   }
   speechSynthesis.speak(utterance);
-  showToast(lang === "zh" ? `正在朗读中文${modeLabel}。` : `Reading the English ${modeLabel}.`);
+  showToast(lang === "zh" ? `正在以${speedLabel}朗读中文${modeLabel}。` : `Reading the English ${modeLabel} at ${speedLabel}.`);
 }
 
 function stopIntroPlayback(box, showMessage = true) {
@@ -2159,6 +2189,13 @@ function bindEvents() {
     if (introMode) {
       const introBox = introMode.closest("[data-audio-intro]");
       if (introBox) setIntroMode(introBox, introMode.dataset.introMode);
+      return;
+    }
+
+    const introSpeed = event.target.closest("[data-intro-speed]");
+    if (introSpeed) {
+      const introBox = introSpeed.closest("[data-audio-intro]");
+      if (introBox) setIntroSpeed(introBox, introSpeed.dataset.introSpeed);
       return;
     }
 

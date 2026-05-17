@@ -1385,6 +1385,10 @@ h1 {
   border-color: rgba(104, 118, 63, 0.2);
 }
 
+.audio-intro-speed-tabs {
+  border-color: rgba(75, 111, 159, 0.22);
+}
+
 .audio-intro-tabs button {
   min-height: 32px;
   border: 0;
