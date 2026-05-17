@@ -480,6 +480,7 @@ function renderCard(item) {
       <div class="art-frame" data-image-id="${escapeHtml(item.id)}">
         <div class="image-placeholder">${escapeHtml(item.name.slice(0, 1))}</div>
         <img alt="${escapeHtml(item.name)} 的现代生成全身形象" hidden>
+        ${renderPortraitQuickLabel(item, profile)}
         <span class="rank-badge">#${item.rank}</span>
         <span class="group-badge">${escapeHtml(item.group)}</span>
       </div>
@@ -512,6 +513,16 @@ function renderImageMemoryCue(item, profile) {
       <span>看图记忆点</span>
       ${escapeHtml(cardImageCue(item, profile))}
     </p>
+  `;
+}
+
+function renderPortraitQuickLabel(item, profile) {
+  const [propLabel] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
+  return `
+    <div class="portrait-quick-label" aria-label="${escapeHtml(item.cn)} 形象重点">
+      <strong>${escapeHtml(propLabel)}</strong>
+      <span>${escapeHtml(item.domains.slice(0, 2).join(" / "))}</span>
+    </div>
   `;
 }
 
@@ -1358,6 +1369,7 @@ function openDetail(id) {
       <div class="detail-art art-frame" data-image-id="${escapeHtml(item.id)}">
         <div class="image-placeholder">${escapeHtml(item.name.slice(0, 1))}</div>
         <img alt="${escapeHtml(item.name)} 的现代生成全身形象" hidden>
+        ${renderPortraitQuickLabel(item, profile)}
       </div>
       ${renderImageLegend(item, profile)}
     </div>

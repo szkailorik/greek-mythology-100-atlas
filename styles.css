@@ -515,17 +515,22 @@ h1 {
 }
 
 .rank-badge,
-.group-badge {
+.group-badge,
+.portrait-quick-label {
   position: absolute;
   display: inline-flex;
   align-items: center;
-  min-height: 28px;
   border: 1px solid rgba(255, 253, 248, 0.46);
   border-radius: 8px;
-  padding: 4px 8px;
   color: #fff;
   background: rgba(31, 36, 48, 0.7);
   backdrop-filter: blur(6px);
+}
+
+.rank-badge,
+.group-badge {
+  min-height: 28px;
+  padding: 4px 8px;
   font-size: 0.78rem;
   font-weight: 800;
 }
@@ -537,7 +542,34 @@ h1 {
 
 .group-badge {
   right: 10px;
+  top: 10px;
+}
+
+.portrait-quick-label {
+  left: 10px;
+  right: 10px;
   bottom: 10px;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 36px;
+  padding: 6px 9px;
+}
+
+.portrait-quick-label strong,
+.portrait-quick-label span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.portrait-quick-label strong {
+  font-size: 0.86rem;
+}
+
+.portrait-quick-label span {
+  color: rgba(255, 253, 248, 0.86);
+  font-size: 0.78rem;
+  font-weight: 800;
+  text-align: right;
 }
 
 .card-body {
