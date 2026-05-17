@@ -1182,6 +1182,11 @@ h1 {
   background: rgba(25, 95, 115, 0.07);
 }
 
+.audio-intro-box[data-intro-speaking] {
+  border-color: rgba(25, 95, 115, 0.48);
+  background: rgba(25, 95, 115, 0.11);
+}
+
 .artwork-box {
   border: 1px solid rgba(179, 122, 34, 0.24);
   background: rgba(179, 122, 34, 0.08);
@@ -1419,10 +1424,20 @@ h1 {
   background: var(--sea);
 }
 
+.audio-intro-actions .audio-intro-play[aria-busy="true"] {
+  background: var(--olive);
+  border-color: rgba(104, 118, 63, 0.74);
+}
+
 .audio-intro-actions .audio-intro-play:hover {
   border-color: var(--sea);
   color: #fff;
   background: #154f60;
+}
+
+.audio-intro-actions .audio-intro-play[aria-busy="true"]:hover {
+  border-color: rgba(104, 118, 63, 0.84);
+  background: #596637;
 }
 
 .image-guide {

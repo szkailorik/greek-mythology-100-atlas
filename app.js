@@ -1340,7 +1340,7 @@ function renderAudioIntroBox(item, profile) {
     <section class="audio-intro-box" data-audio-intro="${escapeHtml(item.id)}" data-active-intro-lang="zh">
       <div class="audio-intro-head">
         <h3>语音简介</h3>
-        <span>默认不自动播放</span>
+        <span data-intro-status>默认不自动播放</span>
       </div>
       <div class="audio-intro-tabs" aria-label="${escapeHtml(item.name)} 语音简介语言">
         <button type="button" data-intro-switch="zh" aria-pressed="true">中文</button>
@@ -1366,7 +1366,7 @@ function detailAudioIntro(item, profile) {
   const parentNames = lineage.parents
     .map((id) => deities.find((entry) => entry.id === id)?.cn)
     .filter(Boolean)
-    .slice(0, 2)
+    .slice(0, 2);
   const zhLineage = parentNames.length ? `常见谱系会把${item.cn}放在${parentNames.join("和")}这一支里，方便把人物关系连起来。` : "";
   const enGroup = termEnglish(item.group);
   const zh = [
@@ -1789,7 +1789,7 @@ function openDetail(id) {
 }
 
 function closeDetail() {
-  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  stopIntroPlayback(null, false);
   if (els.dialog.open && typeof els.dialog.close === "function") {
     els.dialog.close();
   } else {
@@ -1899,6 +1899,7 @@ function speakItem(id, lang = "en") {
   utterance.pitch = 1;
   utterance.volume = 1;
 
+  resetAllIntroPlayback("简介朗读已停止");
   speechSynthesis.cancel();
   speechSynthesis.speak(utterance);
   if (lang === "el") {
@@ -1908,7 +1909,29 @@ function speakItem(id, lang = "en") {
   }
 }
 
+let activeIntroToken = 0;
+
+function resetIntroPlayback(box, statusText = "默认不自动播放") {
+  if (!box) return;
+  delete box.dataset.introSpeaking;
+  delete box.dataset.introToken;
+  const status = box.querySelector("[data-intro-status]");
+  if (status) status.textContent = statusText;
+  const playButton = box.querySelector("[data-intro-play]");
+  if (playButton) {
+    playButton.textContent = "播放当前介绍";
+    playButton.removeAttribute("aria-busy");
+  }
+}
+
+function resetAllIntroPlayback(statusText = "默认不自动播放") {
+  document.querySelectorAll("[data-audio-intro]").forEach((box) => resetIntroPlayback(box, statusText));
+}
+
 function setIntroLanguage(box, lang) {
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  activeIntroToken += 1;
+  resetIntroPlayback(box, lang === "zh" ? "已切换到中文" : "Switched to English");
   box.dataset.activeIntroLang = lang;
   box.querySelectorAll("[data-intro-switch]").forEach((button) => {
     button.setAttribute("aria-pressed", String(button.dataset.introSwitch === lang));
@@ -1935,9 +1958,38 @@ function playDetailIntro(box) {
   utterance.pitch = 1;
   utterance.volume = 1;
 
+  activeIntroToken += 1;
+  const token = String(activeIntroToken);
+  const status = box.querySelector("[data-intro-status]");
+  const playButton = box.querySelector("[data-intro-play]");
+  const finishIntroPlayback = (message) => {
+    if (box.dataset.introToken === token) resetIntroPlayback(box, message);
+  };
+  utterance.onend = () => finishIntroPlayback(lang === "zh" ? "朗读结束，可再次播放" : "Finished. Tap to replay");
+  utterance.onerror = () => finishIntroPlayback(lang === "zh" ? "朗读中断，可再次播放" : "Stopped. Tap to replay");
+
+  resetAllIntroPlayback();
   speechSynthesis.cancel();
+  box.dataset.introSpeaking = lang;
+  box.dataset.introToken = token;
+  if (status) status.textContent = lang === "zh" ? "正在朗读中文介绍" : "Reading English introduction";
+  if (playButton) {
+    playButton.textContent = lang === "zh" ? "正在朗读中文" : "Reading English";
+    playButton.setAttribute("aria-busy", "true");
+  }
   speechSynthesis.speak(utterance);
   showToast(lang === "zh" ? "正在朗读中文简介。" : "Reading the English introduction.");
+}
+
+function stopIntroPlayback(box, showMessage = true) {
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
+  activeIntroToken += 1;
+  if (box) {
+    resetIntroPlayback(box, "已停止朗读");
+  } else {
+    resetAllIntroPlayback("已停止朗读");
+  }
+  if (showMessage) showToast("已停止朗读。");
 }
 
 let toastTimer = null;
@@ -1968,7 +2020,7 @@ function bindEvents() {
   });
 
   els.stopSpeech.addEventListener("click", () => {
-    if ("speechSynthesis" in window) speechSynthesis.cancel();
+    stopIntroPlayback(null, false);
   });
 
   els.memoryTrainer.addEventListener("click", (event) => {
@@ -2052,9 +2104,9 @@ function bindEvents() {
       return;
     }
 
-    if (event.target.closest("[data-intro-stop]")) {
-      if ("speechSynthesis" in window) speechSynthesis.cancel();
-      showToast("已停止朗读。");
+    const introStop = event.target.closest("[data-intro-stop]");
+    if (introStop) {
+      stopIntroPlayback(introStop.closest("[data-audio-intro]"));
       return;
     }
 
