@@ -242,6 +242,28 @@ h1 {
   line-height: 1.55;
 }
 
+.memory-score {
+  width: fit-content;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid rgba(25, 95, 115, 0.18);
+  border-radius: 8px;
+  padding: 6px 9px;
+  background: rgba(25, 95, 115, 0.07);
+}
+
+.memory-score strong {
+  color: var(--sea);
+  font-size: 1rem;
+}
+
+.memory-score span {
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 850;
+}
+
 .memory-stage {
   min-width: 0;
   display: grid;
@@ -288,6 +310,91 @@ h1 {
   color: var(--ink);
   font-size: 0.9rem;
   overflow-wrap: anywhere;
+}
+
+.memory-choice-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.memory-choice {
+  min-width: 0;
+  min-height: 54px;
+  display: grid;
+  align-content: center;
+  gap: 2px;
+  border: 1px solid rgba(25, 95, 115, 0.18);
+  border-radius: 8px;
+  padding: 7px 9px;
+  color: var(--ink);
+  background: #fff;
+  text-align: left;
+}
+
+.memory-choice:hover {
+  border-color: rgba(25, 95, 115, 0.45);
+  color: var(--sea);
+}
+
+.memory-choice:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.memory-choice strong {
+  min-width: 0;
+  font-size: 0.92rem;
+  overflow-wrap: anywhere;
+}
+
+.memory-choice span {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+}
+
+.memory-choice.is-correct {
+  border-color: rgba(104, 118, 63, 0.42);
+  background: rgba(104, 118, 63, 0.12);
+}
+
+.memory-choice.is-wrong {
+  border-color: rgba(127, 48, 67, 0.38);
+  background: rgba(127, 48, 67, 0.1);
+}
+
+.memory-feedback {
+  display: grid;
+  gap: 3px;
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+
+.memory-feedback.is-correct {
+  border: 1px solid rgba(104, 118, 63, 0.28);
+  background: rgba(104, 118, 63, 0.1);
+}
+
+.memory-feedback.is-wrong {
+  border: 1px solid rgba(127, 48, 67, 0.24);
+  background: rgba(127, 48, 67, 0.08);
+}
+
+.memory-feedback strong {
+  color: var(--sea);
+  font-size: 0.88rem;
+}
+
+.memory-feedback.is-wrong strong {
+  color: var(--wine);
+}
+
+.memory-feedback p {
+  margin: 0;
+  color: #3f3b35;
+  font-size: 0.84rem;
+  line-height: 1.45;
 }
 
 .memory-answer {
@@ -1690,7 +1797,8 @@ button.ancestry-node:focus-visible {
   }
 
   .memory-stage,
-  .memory-clue {
+  .memory-clue,
+  .memory-choice-grid {
     grid-template-columns: 1fr;
   }
 

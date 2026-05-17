@@ -110,7 +110,12 @@ const state = {
   englishVoiceName: "",
   greekVoiceName: "",
   quizId: "",
-  quizRevealed: false
+  quizRevealed: false,
+  quizChoices: [],
+  quizChoiceId: "",
+  quizAnswered: false,
+  quizCorrect: 0,
+  quizTotal: 0
 };
 
 let imageObserver = null;
@@ -391,8 +396,9 @@ function renderMemoryTrainer() {
   if (!els.memoryTrainer) return;
   const item = currentQuizItem();
   const profile = visualProfile(item);
+  const choices = currentQuizChoices(item);
   const [propLabel] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
-  const answer = state.quizRevealed
+  const answer = state.quizRevealed || state.quizAnswered
     ? `
       <div class="memory-answer is-revealed">
         <span>答案</span>
@@ -414,6 +420,10 @@ function renderMemoryTrainer() {
       <p class="eyebrow">Picture Memory</p>
       <h2 id="memoryTrainerTitle">看图认神练习</h2>
       <p>先观察全身形象里的道具和神职标签，再点开答案。每次只练一位，适合快速复习。</p>
+      <div class="memory-score" aria-label="本轮答题统计">
+        <strong>${state.quizCorrect}</strong>
+        <span>答对 / ${state.quizTotal || 0} 题</span>
+      </div>
     </div>
     <div class="memory-stage">
       <div class="memory-image art-frame">
@@ -426,14 +436,48 @@ function renderMemoryTrainer() {
           ${renderMemoryClue("神职", item.domains.slice(0, 2).join(" / "))}
           ${renderMemoryClue("象征物", item.symbols.slice(0, 3).join(" / "))}
         </div>
+        <div class="memory-choice-grid" aria-label="选择神名">
+          ${choices.map((choice) => renderQuizChoice(choice, item)).join("")}
+        </div>
+        ${renderQuizFeedback(item)}
         ${answer}
         <div class="memory-actions">
-          <button class="memory-primary" type="button" data-quiz-reveal>${state.quizRevealed ? "再看答案" : "看答案"}</button>
+          <button class="memory-primary" type="button" data-quiz-reveal>${state.quizRevealed || state.quizAnswered ? "答案已显示" : "直接看答案"}</button>
           <button type="button" data-quiz-next>换一位</button>
           <button type="button" data-speak="${escapeHtml(item.id)}" data-speak-lang="en">听英文名</button>
           <button type="button" data-detail="${escapeHtml(item.id)}">打开详情</button>
         </div>
       </div>
+    </div>
+  `;
+}
+
+function renderQuizChoice(choice, item) {
+  const isLocked = state.quizAnswered || state.quizRevealed;
+  const isSelected = state.quizChoiceId === choice.id;
+  const isCorrect = choice.id === item.id;
+  const classes = [
+    "memory-choice",
+    isSelected ? "is-selected" : "",
+    isLocked && isCorrect ? "is-correct" : "",
+    state.quizAnswered && isSelected && !isCorrect ? "is-wrong" : ""
+  ].filter(Boolean).join(" ");
+  return `
+    <button class="${classes}" type="button" data-quiz-choice="${escapeHtml(choice.id)}" ${isLocked ? "disabled" : ""}>
+      <strong>${escapeHtml(choice.name)}</strong>
+      <span>${escapeHtml(choice.cn)}</span>
+    </button>
+  `;
+}
+
+function renderQuizFeedback(item) {
+  if (!state.quizAnswered) return "";
+  const isCorrect = state.quizChoiceId === item.id;
+  const picked = deities.find((entry) => entry.id === state.quizChoiceId);
+  return `
+    <div class="memory-feedback ${isCorrect ? "is-correct" : "is-wrong"}">
+      <strong>${isCorrect ? "答对了" : "再看主符号"}</strong>
+      <p>${isCorrect ? "这个形象已经记住了一次。" : `你选的是 ${escapeHtml(picked?.cn || "另一个神")}，正确答案是 ${escapeHtml(item.cn)}。`}</p>
     </div>
   `;
 }
@@ -449,7 +493,32 @@ function renderMemoryClue(label, value) {
 
 function currentQuizItem() {
   if (!state.quizId) state.quizId = deities[0].id;
-  return deities.find((item) => item.id === state.quizId) || deities[0];
+  const item = deities.find((entry) => entry.id === state.quizId) || deities[0];
+  currentQuizChoices(item);
+  return item;
+}
+
+function currentQuizChoices(item) {
+  if (!state.quizChoices.length || !state.quizChoices.includes(item.id)) {
+    state.quizChoices = buildQuizChoices(item);
+  }
+  return state.quizChoices
+    .map((id) => deities.find((entry) => entry.id === id))
+    .filter(Boolean);
+}
+
+function buildQuizChoices(item) {
+  const pool = deities.filter((entry) => entry.id !== item.id);
+  const distractors = [];
+  while (distractors.length < 3 && pool.length) {
+    const index = Math.floor(Math.random() * pool.length);
+    distractors.push(pool.splice(index, 1)[0].id);
+  }
+  return shuffleQuizChoices([item.id, ...distractors]);
+}
+
+function shuffleQuizChoices(ids) {
+  return [...ids].sort(() => Math.random() - 0.5);
 }
 
 function nextQuizItem() {
@@ -460,6 +529,9 @@ function nextQuizItem() {
   }
   state.quizId = deities[nextIndex].id;
   state.quizRevealed = false;
+  state.quizChoiceId = "";
+  state.quizAnswered = false;
+  state.quizChoices = buildQuizChoices(deities[nextIndex]);
 }
 
 function renderLineageBoard() {
@@ -1643,6 +1715,19 @@ function bindEvents() {
   });
 
   els.memoryTrainer.addEventListener("click", (event) => {
+    const choiceButton = event.target.closest("[data-quiz-choice]");
+    if (choiceButton) {
+      if (state.quizAnswered || state.quizRevealed) return;
+      const item = currentQuizItem();
+      state.quizChoiceId = choiceButton.dataset.quizChoice;
+      state.quizAnswered = true;
+      state.quizRevealed = true;
+      state.quizTotal += 1;
+      if (state.quizChoiceId === item.id) state.quizCorrect += 1;
+      renderMemoryTrainer();
+      return;
+    }
+
     if (event.target.closest("[data-quiz-reveal]")) {
       state.quizRevealed = true;
       renderMemoryTrainer();
