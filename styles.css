@@ -1432,6 +1432,13 @@ h1 {
   font-weight: 900;
 }
 
+.audio-intro-actions button:disabled {
+  cursor: default;
+  color: var(--muted);
+  background: rgba(255, 253, 248, 0.52);
+  opacity: 0.68;
+}
+
 .audio-intro-actions .audio-intro-play {
   border-color: rgba(25, 95, 115, 0.68);
   color: #fff;

@@ -1364,9 +1364,10 @@ function renderAudioIntroBox(item, profile) {
       </div>
       <div class="audio-intro-actions">
         <button class="audio-intro-play" type="button" data-intro-play>播放快速版</button>
+        <button type="button" data-intro-pause disabled>暂停</button>
         <button type="button" data-intro-stop>停止</button>
       </div>
-      <p class="audio-intro-note">快速版适合先认识神祇；故事版会补充谱系和代表故事。语音只会在点击后开始，可切换慢速跟读。</p>
+      <p class="audio-intro-note">快速版适合先认识神祇；故事版会补充谱系和代表故事。语音只会在点击后开始，可暂停或慢速跟读。</p>
     </section>
   `;
 }
@@ -1944,12 +1945,18 @@ function resetIntroPlayback(box, statusText = "默认不自动播放") {
   if (!box) return;
   delete box.dataset.introSpeaking;
   delete box.dataset.introToken;
+  delete box.dataset.introPaused;
   const status = box.querySelector("[data-intro-status]");
   if (status) status.textContent = statusText;
   const playButton = box.querySelector("[data-intro-play]");
   if (playButton) {
     playButton.textContent = introPlayLabel(box);
     playButton.removeAttribute("aria-busy");
+  }
+  const pauseButton = box.querySelector("[data-intro-pause]");
+  if (pauseButton) {
+    pauseButton.textContent = "暂停";
+    pauseButton.disabled = true;
   }
 }
 
@@ -2025,6 +2032,12 @@ function introPlayLabel(box) {
   return mode === "story" ? "Play story" : "Play quick version";
 }
 
+function introActiveStatus(lang, mode, speed) {
+  const modeLabel = introModeName(mode, lang);
+  const speedLabel = introSpeedName(speed, lang);
+  return lang === "zh" ? `正在以${speedLabel}朗读中文${modeLabel}` : `Reading English ${modeLabel} at ${speedLabel}`;
+}
+
 function playDetailIntro(box) {
   if (!("speechSynthesis" in window)) {
     showToast("当前浏览器不支持语音合成。");
@@ -2048,6 +2061,7 @@ function playDetailIntro(box) {
   const token = String(activeIntroToken);
   const status = box.querySelector("[data-intro-status]");
   const playButton = box.querySelector("[data-intro-play]");
+  const pauseButton = box.querySelector("[data-intro-pause]");
   const finishIntroPlayback = (message) => {
     if (box.dataset.introToken === token) resetIntroPlayback(box, message);
   };
@@ -2058,15 +2072,44 @@ function playDetailIntro(box) {
   speechSynthesis.cancel();
   box.dataset.introSpeaking = lang;
   box.dataset.introToken = token;
+  delete box.dataset.introPaused;
   const modeLabel = introModeName(mode, lang);
   const speedLabel = introSpeedName(speed, lang);
-  if (status) status.textContent = lang === "zh" ? `正在以${speedLabel}朗读中文${modeLabel}` : `Reading English ${modeLabel} at ${speedLabel}`;
+  if (status) status.textContent = introActiveStatus(lang, mode, speed);
   if (playButton) {
     playButton.textContent = lang === "zh" ? `正在朗读${modeLabel}` : `Reading ${modeLabel}`;
     playButton.setAttribute("aria-busy", "true");
   }
+  if (pauseButton) {
+    pauseButton.textContent = "暂停";
+    pauseButton.disabled = false;
+  }
   speechSynthesis.speak(utterance);
   showToast(lang === "zh" ? `正在以${speedLabel}朗读中文${modeLabel}。` : `Reading the English ${modeLabel} at ${speedLabel}.`);
+}
+
+function toggleIntroPause(box) {
+  if (!("speechSynthesis" in window) || !box.dataset.introSpeaking) return;
+  const lang = box.dataset.activeIntroLang || "zh";
+  const mode = box.dataset.activeIntroMode || "quick";
+  const speed = box.dataset.activeIntroSpeed || "normal";
+  const status = box.querySelector("[data-intro-status]");
+  const pauseButton = box.querySelector("[data-intro-pause]");
+
+  if (box.dataset.introPaused === "true") {
+    speechSynthesis.resume();
+    delete box.dataset.introPaused;
+    if (pauseButton) pauseButton.textContent = "暂停";
+    if (status) status.textContent = introActiveStatus(lang, mode, speed);
+    showToast(lang === "zh" ? "继续朗读。" : "Resuming audio.");
+    return;
+  }
+
+  speechSynthesis.pause();
+  box.dataset.introPaused = "true";
+  if (pauseButton) pauseButton.textContent = lang === "zh" ? "继续" : "Resume";
+  if (status) status.textContent = lang === "zh" ? `已暂停${introModeName(mode, lang)}` : `Paused ${introModeName(mode, lang)}`;
+  showToast(lang === "zh" ? "已暂停朗读。" : "Audio paused.");
 }
 
 function stopIntroPlayback(box, showMessage = true) {
@@ -2203,6 +2246,13 @@ function bindEvents() {
     if (introPlay) {
       const introBox = introPlay.closest("[data-audio-intro]");
       if (introBox) playDetailIntro(introBox);
+      return;
+    }
+
+    const introPause = event.target.closest("[data-intro-pause]");
+    if (introPause) {
+      const introBox = introPause.closest("[data-audio-intro]");
+      if (introBox) toggleIntroPause(introBox);
       return;
     }
 
