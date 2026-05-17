@@ -108,6 +108,7 @@ const state = {
   query: "",
   sort: "rank",
   englishVoiceName: "",
+  chineseVoiceName: "",
   greekVoiceName: "",
   quizId: "",
   quizRevealed: false,
@@ -1333,6 +1334,116 @@ function renderPronunciationBox(item) {
   `;
 }
 
+function renderAudioIntroBox(item, profile) {
+  const intro = detailAudioIntro(item, profile);
+  return `
+    <section class="audio-intro-box" data-audio-intro="${escapeHtml(item.id)}" data-active-intro-lang="zh">
+      <div class="audio-intro-head">
+        <h3>语音简介</h3>
+        <span>默认不自动播放</span>
+      </div>
+      <div class="audio-intro-tabs" aria-label="${escapeHtml(item.name)} 语音简介语言">
+        <button type="button" data-intro-switch="zh" aria-pressed="true">中文</button>
+        <button type="button" data-intro-switch="en" aria-pressed="false">English</button>
+      </div>
+      <div class="audio-intro-copy">
+        <p data-intro-text="zh" lang="zh-CN">${escapeHtml(intro.zh)}</p>
+        <p data-intro-text="en" lang="en" hidden>${escapeHtml(intro.en)}</p>
+      </div>
+      <div class="audio-intro-actions">
+        <button class="audio-intro-play" type="button" data-intro-play>播放当前介绍</button>
+        <button type="button" data-intro-stop>停止</button>
+      </div>
+      <p class="audio-intro-note">适合孩子边看图边听故事；语音只会在点击后开始。</p>
+    </section>
+  `;
+}
+
+function detailAudioIntro(item, profile) {
+  const story = getStory(item);
+  const lineage = getLineage(item);
+  const [propLabel] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
+  const parentNames = lineage.parents
+    .map((id) => deities.find((entry) => entry.id === id)?.cn)
+    .filter(Boolean)
+    .slice(0, 2)
+  const zhLineage = parentNames.length ? `常见谱系会把${item.cn}放在${parentNames.join("和")}这一支里，方便把人物关系连起来。` : "";
+  const enGroup = termEnglish(item.group);
+  const zh = [
+    `${item.cn}，英文名 ${item.name}，是希腊神话中和${item.domains.slice(0, 3).join("、")}有关的神祇。`,
+    item.summary,
+    `看这张生成形象时，可以先认${propLabel}，再看${item.symbols.slice(0, 3).join("、")}，这些都是帮助记住${item.cn}的关键线索。`,
+    zhLineage,
+    `最有名的小故事是《${story.titleZh}》：${story.zh}`
+  ].filter(Boolean).join("");
+  const enDomains = englishTerms(item.domains, 3).join(", ");
+  const enSymbols = englishTerms(item.symbols, 3).join(", ");
+  const en = [
+    `${item.name} belongs to ${enGroup} and is connected with ${enDomains || "a distinctive divine role"}.`,
+    `In the portrait, look first for ${enSymbols || "the main visual symbols"}; those clues help you remember who this deity is.`,
+    `${story.titleEn}: ${story.en}`
+  ].join(" ");
+  return { zh, en };
+}
+
+function englishTerms(terms, limit) {
+  return terms.slice(0, limit).map((term) => termEnglish(term));
+}
+
+function termEnglish(term) {
+  const map = {
+    奥林匹斯核心: "the core Olympian gods", 奥林匹斯主神: "the Olympian gods", 冥界与家宅: "the underworld and household gods",
+    著名小神: "well-known minor gods", 泰坦神族: "the Titans", 海洋与风: "sea and wind deities",
+    海洋与风神: "sea and wind deities", 原初神: "the primordial gods", 命运与人格化: "fate and personified powers",
+    命运与人格化神祇: "fate and personified powers", 缪斯与美惠: "the Muses and the Graces",
+    三美惠与缪斯: "the Graces and the Muses",
+    天空: "sky", 雷霆: "thunder", 王权: "kingship", 婚姻: "marriage", 王后: "queenship", 家庭: "family",
+    海洋: "the sea", 地震: "earthquakes", 马: "horses", 农业: "agriculture", 谷物: "grain", 母亲: "motherhood",
+    智慧: "wisdom", 战略: "strategy", 工艺: "craft", 太阳: "the sun", 音乐: "music", 预言: "prophecy",
+    月亮: "the moon", 狩猎: "hunting", 少女: "maidenhood", 战争: "war", 暴烈: "violent force", 勇武: "valor",
+    爱欲: "desire", 美: "beauty", 魅力: "charm", 火: "fire", 锻造: "smithcraft", 工匠: "craftsmanship",
+    信使: "messengers", 旅行: "travel", 商业: "commerce", 葡萄酒: "wine", 狂欢: "ecstasy", 戏剧: "theater",
+    冥界: "the underworld", 财富: "wealth", 死者: "the dead", 炉火: "hearth fire", 家宅: "home", 城邦: "the city",
+    春天: "spring", 冥后: "queen of the underworld", 重生: "rebirth", 吸引: "attraction", 生命力: "life force",
+    胜利: "victory", 荣耀: "glory", 凯旋: "triumph", 青春: "youth", 侍酒: "cup-bearing", 复新: "renewal",
+    彩虹: "rainbow", 传信: "divine messages", 誓言: "oaths", 光照: "sunlight", 见证: "witnessing",
+    夜空: "the night sky", 爱情: "love", 黎明: "dawn", 晨光: "morning light", 新开始: "new beginnings",
+    魔法: "magic", 岔路: "crossroads", 夜晚: "night", 牧野: "pastures", 山林: "wild hills", 野性音乐: "wild music",
+    医术: "medicine", 疗愈: "healing", 神庙: "temple healing", 健康: "health", 卫生: "hygiene", 预防: "prevention",
+    睡眠: "sleep", 梦境入口: "the gate of dreams", 安息: "rest", 死亡: "death", 安静终结: "quiet ending",
+    命运: "fate", 梦: "dreams", 形象: "forms", 睡眠幻象: "sleep visions", 报应: "retribution", 尺度: "measure",
+    傲慢惩罚: "punishment of pride", 幸运: "fortune", 城市命运: "city fortune", 偶然: "chance",
+    神法: "divine law", 秩序: "order", 母性: "motherhood", 避难: "refuge", 神圣分娩: "sacred birth",
+    母神: "mother goddess", 泰坦王后: "Titan queen", 保护幼子: "protecting a child", 时间: "time",
+    泰坦王权: "Titan kingship", 吞噬: "devouring", 环世大河: "world-encircling river", 海洋边界: "ocean boundary",
+    水源: "water source", 淡水: "fresh water", 母性水源: "motherly waters", 河流之母: "mother of rivers",
+    高天之光: "heavenly light", 太阳血统: "solar lineage", 观照: "watching light", 光辉: "radiance",
+    视觉: "sight", 贵金属光泽: "the gleam of precious metals", 理智: "intellect", 天轴: "axis of heaven",
+    北方: "the north", 明亮: "brightness", 神谕: "oracle", 月性: "moonlike brightness", 人类祖先: "human ancestry",
+    火种: "fire", 文明: "civilization", 牺牲: "sacrifice", 力量: "strength", 统治权: "rule", 强制: "compulsion",
+    霹雳: "thunderbolt", 鹰: "eagle", 橡树: "oak", 孔雀: "peacock", 王冠: "crown", 石榴: "pomegranate",
+    三叉戟: "trident", 海马: "sea horse", 海豚: "dolphin", 麦穗: "wheat", 火炬: "torch", 丰饶角: "cornucopia",
+    猫头鹰: "owl", 橄榄树: "olive tree", 盾牌: "shield", 里拉琴: "lyre", 月桂: "laurel", 弓: "bow",
+    弓箭: "bow and arrows", 鹿: "deer", 新月: "crescent moon", 头盔: "helmet", 长矛: "spear", 战车: "chariot",
+    贝壳: "shell", 鸽子: "dove", 玫瑰: "rose", 铁砧: "anvil", 锤子: "hammer", 火焰: "flame",
+    翼帽: "winged cap", 翼鞋: "winged sandals", 双蛇杖: "caduceus", 葡萄藤: "grapevine", 酒杯: "wine cup",
+    豹: "leopard", 隐身盔: "helmet of invisibility", 双叉杖: "bident", 冥府犬: "hound of Hades",
+    炉火: "hearth fire", 面纱: "veil", 圆形祭坛: "round altar", 鲜花: "flowers", 翅膀: "wings",
+    桂冠: "laurel wreath", 棕榈枝: "palm branch", 水罐: "water jar", 太阳车: "sun chariot", 光冠: "radiant crown",
+    月轮: "moon disk", 白马: "white horses", 银冠: "silver crown", 玫瑰色手指: "rosy fingers", 晨车: "dawn chariot",
+    钥匙: "keys", 三重形象: "triple form", 排箫: "panpipes", 山羊角: "goat horns", 牧杖: "shepherd staff",
+    蛇杖: "serpent staff", 药碗: "medicine bowl", 犬: "dog", 蛇: "serpent", 清洁: "cleanliness",
+    罂粟: "poppy", 沉睡: "sleep", 倒置火炬: "inverted torch", 剑: "sword", 梦幕: "dream veil",
+    人形: "human form", 天平: "scales", 轮: "wheel", 城冠: "city crown", 舵: "rudder", 卷轴: "scroll",
+    双子: "twins", 棕榈: "palm", 狮子: "lion", 鼓: "drum", 石头: "stone", 镰刀: "sickle", 沙漏: "hourglass",
+    水流: "flowing water", 牛角: "bull horn", 海蛇: "sea serpent", 鱼: "fish", 河流: "river", 金光: "golden light",
+    眼睛: "eye", 宝石: "gem", 星空: "starry sky", 星轴: "star axis", 权杖: "scepter", 神谕三脚架: "oracle tripod",
+    锁链: "chains", 金苹果: "golden apple", 项链: "necklace", 悲剧面具: "tragic mask", 喜剧面具: "comic mask",
+    星球仪: "celestial globe", 圆规: "compass", 星冠: "star crown"
+  };
+  return map[term] || term;
+}
+
 function renderImageLegend(item, profile) {
   const [propLabel] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
   const legendItems = [
@@ -1655,6 +1766,7 @@ function openDetail(id) {
         <span>英文常见读音：${escapeHtml(item.pronunciation)} · 希腊文名可点击朗读</span>
       </div>
       ${renderPronunciationBox(item)}
+      ${renderAudioIntroBox(item, profile)}
       ${tagList(item.domains, "domain-list")}
       ${tagList(item.symbols, "symbol-list")}
       ${renderGeneratedBox(item, profile)}
@@ -1677,6 +1789,7 @@ function openDetail(id) {
 }
 
 function closeDetail() {
+  if ("speechSynthesis" in window) speechSynthesis.cancel();
   if (els.dialog.open && typeof els.dialog.close === "function") {
     els.dialog.close();
   } else {
@@ -1700,6 +1813,10 @@ function populateVoices() {
   const greekVoices = voices
     .filter((voice) => /^el[-_]/iu.test(voice.lang))
     .sort((a, b) => voiceScore(b, "el") - voiceScore(a, "el"));
+  const chineseVoices = voices
+    .filter((voice) => /^zh[-_]/iu.test(voice.lang))
+    .filter((voice) => !isNoveltyVoice(voice.name))
+    .sort((a, b) => voiceScore(b, "zh") - voiceScore(a, "zh"));
   const candidates = englishVoices.length
     ? englishVoices
     : (rawEnglishVoices.length ? rawEnglishVoices : voices).sort((a, b) => voiceScore(b, "en") - voiceScore(a, "en"));
@@ -1717,6 +1834,7 @@ function populateVoices() {
   const preferred = pickVoice(candidates, "en");
 
   state.englishVoiceName = voiceStillAvailable(state.englishVoiceName, candidates) ? state.englishVoiceName : preferred?.name || "";
+  state.chineseVoiceName = voiceStillAvailable(state.chineseVoiceName, chineseVoices) ? state.chineseVoiceName : (pickVoice(chineseVoices, "zh")?.name || "");
   state.greekVoiceName = voiceStillAvailable(state.greekVoiceName, greekVoices) ? state.greekVoiceName : (pickVoice(greekVoices, "el")?.name || "");
   els.voiceSelect.value = state.englishVoiceName;
 }
@@ -1730,6 +1848,8 @@ function voiceScore(voice, lang) {
   if (lang === "en" && voice.lang === "en-US") score += 70;
   if (lang === "en" && /^en[-_]GB/iu.test(voice.lang)) score += 45;
   if (lang === "el" && /^el[-_]GR/iu.test(voice.lang)) score += 80;
+  if (lang === "zh" && /^zh[-_]CN/iu.test(voice.lang)) score += 75;
+  if (lang === "zh" && /^zh[-_](HK|TW)/iu.test(voice.lang)) score += 35;
   if (/samantha|alex|ava|allison|susan|victoria|daniel|karen|moira|tessa|serena|google|microsoft|aria|natural|premium|enhanced/iu.test(voice.name)) score += 25;
   if (voice.localService) score += 4;
   if (isNoveltyVoice(voice.name)) score -= 80;
@@ -1747,6 +1867,10 @@ function pickVoice(voices, lang) {
 
 function voiceForLanguage(lang) {
   const voices = speechSynthesis.getVoices();
+  if (lang === "zh") {
+    const chineseVoices = voices.filter((voice) => /^zh[-_]/iu.test(voice.lang)).sort((a, b) => voiceScore(b, "zh") - voiceScore(a, "zh"));
+    return chineseVoices.find((voice) => voice.name === state.chineseVoiceName) || pickVoice(chineseVoices, "zh");
+  }
   if (lang === "el") {
     const greekVoices = voices.filter((voice) => /^el[-_]/iu.test(voice.lang)).sort((a, b) => voiceScore(b, "el") - voiceScore(a, "el"));
     return greekVoices.find((voice) => voice.name === state.greekVoiceName) || pickVoice(greekVoices, "el");
@@ -1782,6 +1906,38 @@ function speakItem(id, lang = "en") {
   } else {
     showToast(`${item.name}: ${item.pronunciation}`);
   }
+}
+
+function setIntroLanguage(box, lang) {
+  box.dataset.activeIntroLang = lang;
+  box.querySelectorAll("[data-intro-switch]").forEach((button) => {
+    button.setAttribute("aria-pressed", String(button.dataset.introSwitch === lang));
+  });
+  box.querySelectorAll("[data-intro-text]").forEach((copy) => {
+    copy.hidden = copy.dataset.introText !== lang;
+  });
+}
+
+function playDetailIntro(box) {
+  if (!("speechSynthesis" in window)) {
+    showToast("当前浏览器不支持语音合成。");
+    return;
+  }
+  const lang = box.dataset.activeIntroLang || "zh";
+  const text = box.querySelector(`[data-intro-text="${lang}"]`)?.textContent?.trim();
+  if (!text) return;
+
+  const selected = voiceForLanguage(lang);
+  const utterance = new SpeechSynthesisUtterance(text);
+  if (selected) utterance.voice = selected;
+  utterance.lang = selected?.lang || (lang === "zh" ? "zh-CN" : "en-US");
+  utterance.rate = lang === "zh" ? 0.86 : 0.82;
+  utterance.pitch = 1;
+  utterance.volume = 1;
+
+  speechSynthesis.cancel();
+  speechSynthesis.speak(utterance);
+  showToast(lang === "zh" ? "正在朗读中文简介。" : "Reading the English introduction.");
 }
 
 let toastTimer = null;
@@ -1882,6 +2038,26 @@ function bindEvents() {
   });
 
   document.addEventListener("click", (event) => {
+    const introSwitch = event.target.closest("[data-intro-switch]");
+    if (introSwitch) {
+      const introBox = introSwitch.closest("[data-audio-intro]");
+      if (introBox) setIntroLanguage(introBox, introSwitch.dataset.introSwitch);
+      return;
+    }
+
+    const introPlay = event.target.closest("[data-intro-play]");
+    if (introPlay) {
+      const introBox = introPlay.closest("[data-audio-intro]");
+      if (introBox) playDetailIntro(introBox);
+      return;
+    }
+
+    if (event.target.closest("[data-intro-stop]")) {
+      if ("speechSynthesis" in window) speechSynthesis.cancel();
+      showToast("已停止朗读。");
+      return;
+    }
+
     const speakButton = event.target.closest("[data-speak]");
     if (speakButton) {
       speakItem(speakButton.dataset.speak, speakButton.dataset.speakLang || "en");
