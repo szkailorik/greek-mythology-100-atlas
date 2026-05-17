@@ -474,6 +474,7 @@ function renderCatalog() {
 
 function renderCard(item) {
   const story = getStory(item);
+  const profile = visualProfile(item);
   return `
     <article class="deity-card" data-id="${escapeHtml(item.id)}">
       <div class="art-frame" data-image-id="${escapeHtml(item.id)}">
@@ -492,6 +493,7 @@ function renderCard(item) {
         </div>
         <div class="pronunciation">点击英文名听英文发音；点击希腊文听希腊语读法</div>
         ${tagList(item.domains, "domain-list")}
+        ${renderImageMemoryCue(item, profile)}
         <p class="summary">${escapeHtml(item.summary)}</p>
         <p class="artwork-line"><span>经典艺术参考</span>${escapeHtml(item.artwork.title)} · ${escapeHtml(item.artwork.artist)} · ${escapeHtml(item.artwork.year)}</p>
         <p class="story-line"><span>代表小故事</span>${escapeHtml(story.titleZh)} · ${escapeHtml(story.titleEn)}</p>
@@ -502,6 +504,22 @@ function renderCard(item) {
       </div>
     </article>
   `;
+}
+
+function renderImageMemoryCue(item, profile) {
+  return `
+    <p class="image-memory">
+      <span>看图记忆点</span>
+      ${escapeHtml(cardImageCue(item, profile))}
+    </p>
+  `;
+}
+
+function cardImageCue(item, profile) {
+  const [propLabel] = propVisualNotes[profile.prop] || propVisualNotes.laurel;
+  const domains = item.domains.slice(0, 2).join("、");
+  const symbols = item.symbols.slice(0, 2).join("、");
+  return `先认${propLabel}，再记${item.cn}掌管${domains}；画面里的${symbols}就是最重要的提示。`;
 }
 
 function tagList(items, className) {
@@ -997,6 +1015,7 @@ function renderGeneratedBox(item, profile) {
         <h3>生成全身形象解读</h3>
         <span>看图线索</span>
       </div>
+      <p class="kid-image-cue"><strong>先看一眼</strong>${escapeHtml(cardImageCue(item, profile))}</p>
       <p>${escapeHtml(profile.description)}</p>
       <div class="image-guide">
         ${guide.map(({ label, text }) => `

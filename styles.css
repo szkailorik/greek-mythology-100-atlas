@@ -636,6 +636,24 @@ h1 {
   line-height: 1.62;
 }
 
+.image-memory {
+  display: grid;
+  gap: 3px;
+  margin: 0;
+  border-top: 1px solid rgba(25, 95, 115, 0.14);
+  border-bottom: 1px solid rgba(25, 95, 115, 0.1);
+  padding: 8px 0;
+  color: #31404d;
+  font-size: 0.86rem;
+  line-height: 1.48;
+}
+
+.image-memory span {
+  color: var(--sea);
+  font-size: 0.76rem;
+  font-weight: 900;
+}
+
 .artwork-line,
 .story-line {
   display: grid;
@@ -976,6 +994,21 @@ h1 {
   color: #3f3b35;
   font-size: 0.93rem;
   line-height: 1.55;
+}
+
+.kid-image-cue {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  border-top: 1px solid rgba(25, 95, 115, 0.14);
+  border-bottom: 1px solid rgba(25, 95, 115, 0.1);
+  padding: 8px 0;
+}
+
+.kid-image-cue strong {
+  color: var(--sea);
+  font-size: 0.78rem;
 }
 
 .pronunciation-actions {
@@ -1498,6 +1531,11 @@ button.ancestry-node:focus-visible {
   }
 
   .image-guide-row {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+
+  .kid-image-cue {
     grid-template-columns: 1fr;
     gap: 2px;
   }
